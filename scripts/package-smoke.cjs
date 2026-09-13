@@ -32,7 +32,7 @@ async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expres
  for(let i=0;i<100;i++){if(await evaluate('document.documentElement.lang==="en-US"'))break;await sleep(50);}
  } else { assert.equal(initial.settings.language,'en'); }
  assert.equal(await evaluate('document.documentElement.lang'),'en-US');
- assert.equal(await evaluate('document.querySelector(".brand span").textContent'),'Rixu');
+ assert.equal(await evaluate('document.title'),'Rixu');
  const saved=JSON.parse(fs.readFileSync(path.join(directory,'tasks.json'),'utf8'));assert.equal(saved.tasks[0].title,'Packaged save / 正式包保存');assert.equal(saved.schemaVersion,3);assert.equal(saved.settings.language,'en');
  const result={passed:true,platform:process.platform,arch:process.arch,version:initial.native.version,checks:['packaged executable','asar preload and renderer','packaged integrations','UI create','durable schema 3 save','clean exit'],sandbox:!flags.includes('--no-sandbox')};
  finished=true;evaluate('window.fourfold.call("window:quit")').catch(()=>{});const ended=await exit;assert.equal(ended.code,0);socket.close();clearTimeout(timeout);

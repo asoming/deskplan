@@ -15,6 +15,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  const runtime=await require('../src/main.cjs').start(),win=runtime.window,s=runtime.store;win.show();
  const js=code=>win.webContents.executeJavaScript(code,true),call=(name,payload)=>js(`window.fourfold.call(${JSON.stringify(name)},${JSON.stringify(payload)})`);
  await until(()=>js('document.querySelectorAll(".zone").length===4'),'board');
+ await require('./window-desktop-checks.cjs')(runtime,js,call);
  assert.equal(await js('document.body.classList.contains("desktop-blend")'),true);
  await js(`document.querySelector('[data-edit="${a}"]').click()`);await until(()=>js('document.querySelector("#task-dialog").open'),'editor');
  await js(`document.querySelector('#task-repeat').value='weekly';document.querySelector('#task-checklist').value='检查资料\\n写下重点';document.querySelector('#task-checklist').dispatchEvent(new Event('input'));document.querySelector('[data-check-item="0"]').click();document.querySelector('#task-form').requestSubmit();`);

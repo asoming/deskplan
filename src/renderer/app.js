@@ -40,7 +40,6 @@
     setLanguage(state.settings.language);
     if (languageChanged) {
       translateStatic();
-      $('.brand').dataset.lockLabel = tr('锁定');
       labels = ['马上做', '尽快做', '按计划做', '先放着'].map(value => tr(value));
       repeatLabels = { daily: tr('每天'), weekdays: tr('工作日'), weekly: tr('每周'), monthly: tr('每月') };
       $('#task-dialog-title').textContent = tr(editingId ? '任务详情' : '新建任务');
@@ -58,7 +57,12 @@
     $('#workspace').classList.toggle('with-calendar', state.settings.calendarOpen);
     $('#calendar-toggle').setAttribute('aria-expanded', String(state.settings.calendarOpen));
     $('#calendar-toggle').setAttribute('aria-label', state.settings.calendarOpen ? tr('收起日历') : tr('显示日历'));
-    $('#pin-toggle').textContent = state.settings.alwaysOnTop ? tr('✓ 始终置顶') : tr('始终置顶');
+    $('#calendar-toggle').title = $('#calendar-toggle').getAttribute('aria-label');
+    document.body.classList.toggle('position-fixed', state.settings.positionFixed);
+    $('#position-toggle').setAttribute('aria-pressed', String(state.settings.positionFixed));
+    $('#position-toggle').setAttribute('aria-label', state.settings.positionFixed ? tr('解锁位置') : tr('固定位置'));
+    $('#position-toggle').title = $('#position-toggle').getAttribute('aria-label');
+    $('#position-status').textContent = state.native.panelLocked ? tr('鼠标穿透中') : state.settings.positionFixed ? tr('位置已固定') : tr('拖动此处移动');
     renderBoard(); renderCalendar(); renderPlanner();
     if ($('#library-dialog').open) renderLibrary();
     if ($('#settings-dialog').open) renderSettings();
@@ -88,8 +92,8 @@
     if (!state) return;
     const { view, compactMode } = state.settings, today = dateKey(new Date(now));
     document.body.classList.toggle('compact-mode', compactMode);
-    $('#compact-toggle').textContent = compactMode ? tr('展开') : tr('小窗');
-    $('#compact-toggle').setAttribute('aria-label', compactMode ? tr('展开完整计划') : tr('缩为置顶小窗'));
+    $('#compact-toggle').setAttribute('aria-label', compactMode ? tr('展开完整计划') : tr('缩为小窗'));
+    $('#compact-toggle').title = $('#compact-toggle').getAttribute('aria-label');
     $('#compact-panel').hidden = !compactMode;
     $('#board').hidden = view !== 'quadrants'; $('#planner').hidden = view === 'quadrants';
     document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-current', String(b.dataset.tab === view)));
@@ -295,7 +299,8 @@
   $('#minimize').onclick = action(() => call('window:minimize'));
   $('#close-window').onclick = action(() => call('window:close'));
   $('#quit').onclick = action(() => call('window:quit'));
-  $('#pin-toggle').onclick = action(async () => { closePopovers(); await call('settings', { alwaysOnTop: !state.settings.alwaysOnTop }); });
+  $('#position-toggle').onclick = action(() => call('settings', { positionFixed: !state.settings.positionFixed, windowPosition: 'manual' }));
+  $('#dock-right').onclick = action(() => call('settings', { windowPosition: 'top-right', positionFixed: true }));
   $('#settings-button').onclick = () => { closePopovers(); renderSettings(); $('#settings-dialog').showModal(); };
   $('#undo').onclick = action(async () => { await call('undo'); toast(tr('已撤销')); });
   $('#export-backup').onclick = action(async () => { if (await call('backup:export')) toast(tr('备份已导出，不包含原文件')); });

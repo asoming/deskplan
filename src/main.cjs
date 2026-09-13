@@ -19,11 +19,11 @@ if (process.platform === 'linux' || (process.platform === 'darwin' && process.ar
 const dataDirectory = process.env.RIXU_DATA_DIR || process.env.FOURFOLD_DATA_DIR;
 if (dataDirectory) app.setPath('userData', path.resolve(dataDirectory));
 const isTest = process.env.RIXU_TEST === '1' || process.env.FOURFOLD_TEST === '1';
-const sizes = { compact: [760, 540], normal: [960, 640], large: [1180, 760] };
+const { panelBounds, sameBounds } = require('./window-layout.cjs');
 const indexFile = path.join(__dirname, 'renderer', 'index.html');
 let panelLocked = false, unlockRegistered = false;
 const unlockShortcut = 'CommandOrControl+Shift+L';
-let quickWin, quickRegistered = false, registeredAccelerator = null, normalBounds;
+let quickWin, quickRegistered = false, registeredAccelerator = null, normalBounds, fixedBounds;
 let win, tray, store, quitting = false, timer, lastCheck = Date.now(), lastLevels = new Map(), moveTimer;
 
 function viewState() {
@@ -60,6 +60,13 @@ function clampBounds(bounds) {
   const width = Math.min(bounds.width, area.width), height = Math.min(bounds.height, area.height);
   return { x: Math.max(area.x, Math.min(bounds.x, area.x + area.width - width)), y: Math.max(area.y, Math.min(bounds.y, area.y + area.height - height)), width, height };
 }
+function positionWindow() {
+  const current = win.getBounds();
+  const area = screen.getDisplayMatching(current).workArea;
+  const bounds = panelBounds(store.state.settings, current, area);
+  fixedBounds = bounds;
+  if (!sameBounds(current, bounds)) win.setBounds(bounds);
+}
 function applySettings() {
   setLanguage(store.state.settings.language);
   win.setTitle(tr('日序'));
@@ -70,9 +77,10 @@ function applySettings() {
   updateApplicationMenu();
   nativeTheme.themeSource = store.state.settings.theme;
   win.setHasShadow(!store.state.settings.desktopBlend);
-  win.setAlwaysOnTop(store.state.settings.compactMode || store.state.settings.alwaysOnTop);
-  const [width, height] = store.state.settings.compactMode ? [390, 320] : sizes[store.state.settings.windowSize];
-  win.setBounds(clampBounds({ ...win.getBounds(), width, height }));
+  // A planner must never remain above the user's working application.
+  win.setAlwaysOnTop(false);
+  if (process.platform !== 'linux') win.setMovable(!store.state.settings.positionFixed);
+  positionWindow();
   registerQuickShortcut(); updateTray();
 }
 function setAutoStart(enabled) {
@@ -107,7 +115,7 @@ function updateTray() {
     { label: tr('随手记'), click: () => showQuickCapture() },
     { label: panelLocked ? tr('解锁面板') : tr('锁定并穿透鼠标'), enabled: unlockRegistered || !!tray, click: () => { try { setPanelLocked(!panelLocked); } catch (e) { reportError(e); } } },
     { label: tr('恢复可见'), click: () => { store.saveSettings({ transparency: 35, textTransparency: 0, compactMode: false }); applySettings(); broadcast(); showWindow(); } },
-    { label: tr('始终置顶'), type: 'checkbox', checked: store.state.settings.alwaysOnTop, click: item => { try { store.saveSettings({ alwaysOnTop: item.checked }); applySettings(); broadcast(); } catch (e) { reportError(e); } } },
+    { label: tr('固定位置'), type: 'checkbox', checked: store.state.settings.positionFixed, click: item => { try { store.saveSettings({ positionFixed: item.checked, windowPosition: 'manual' }); applySettings(); broadcast(); } catch (e) { reportError(e); } } },
     { type: 'separator' }, { label: tr('退出日序'), click: () => { quitting = true; app.quit(); } },
   ]));
 }
@@ -158,7 +166,7 @@ function registerQuickShortcut() {
 }
 async function showQuickCapture() {
   if (!quickWin || quickWin.isDestroyed()) {
-    quickWin = new BrowserWindow({ width: 540, height: 190, frame: false, resizable: false, alwaysOnTop: true, skipTaskbar: true, show: false,
+    quickWin = new BrowserWindow({ width: 540, height: 190, frame: false, resizable: false, alwaysOnTop: false, skipTaskbar: true, show: false,
       title: tr('日序 · 随手记'), backgroundColor: '#f5f7f4', icon: path.join(__dirname, 'assets', 'icon.png'),
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false } });
     quickWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -174,7 +182,7 @@ async function showQuickCapture() {
 function setCompact(enabled) {
   if (enabled && !store.state.settings.compactMode) normalBounds = win.getBounds();
   store.saveSettings({ compactMode: enabled }); applySettings();
-  if (!enabled && normalBounds) win.setBounds(clampBounds(normalBounds));
+  if (!enabled && normalBounds && store.state.settings.windowPosition === 'manual') { fixedBounds = clampBounds(normalBounds); win.setBounds(fixedBounds); }
   broadcast();
 }
 function registerIPC() {
@@ -198,7 +206,9 @@ function registerIPC() {
       if (choice.response === 1) { store.purge(id); broadcast(); return true; } return false;
     },
     settings: async patch => {
-      const valid = validateSettings(patch), oldAutoStart = store.state.settings.autoStart;
+      const valid = validateSettings(patch);
+      if (valid.positionFixed === false && !('windowPosition' in valid)) valid.windowPosition = 'manual';
+      const oldAutoStart = store.state.settings.autoStart;
       if ('autoStart' in valid && valid.autoStart !== oldAutoStart) setAutoStart(valid.autoStart);
       try { store.saveSettings(valid); } catch (e) { if ('autoStart' in valid) setAutoStart(oldAutoStart); throw e; }
       applySettings(); broadcast();
@@ -259,9 +269,9 @@ async function start() {
   setLanguage(store.state.settings.language);
   nativeTheme.themeSource = store.state.settings.theme;
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
-  const [width, height] = sizes[store.state.settings.windowSize];
   const saved = store.state.windowBounds;
-  const bounds = saved ? clampBounds({ ...saved, width, height }) : { width, height };
+  const area = (saved ? screen.getDisplayMatching(saved) : screen.getPrimaryDisplay()).workArea;
+  const bounds = panelBounds(store.state.settings, saved || area, area);
   win = new BrowserWindow({ ...bounds, show: false, frame: false, transparent: true, backgroundColor: '#00000000',
     resizable: false, maximizable: false, fullscreenable: false, hasShadow: true,
     title: tr('日序'), icon: path.join(__dirname, 'assets', 'icon.png'),
@@ -269,11 +279,22 @@ async function start() {
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', event => event.preventDefault());
   win.webContents.on('will-attach-webview', event => event.preventDefault());
-  win.setAlwaysOnTop(store.state.settings.alwaysOnTop);
+  win.setAlwaysOnTop(false);
   Menu.setApplicationMenu(null);
   unlockRegistered = globalShortcut.register(unlockShortcut, () => { try { setPanelLocked(!panelLocked); if (!panelLocked) showWindow(); } catch (e) { reportError(e); } });
   createTray(); registerIPC(); registerQuickShortcut(); applySettings();
-  win.on('move', () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => { if (!quitting && win && !win.isDestroyed() && !store.state.settings.compactMode) { try { store.saveBounds(win.getBounds()); } catch (e) { reportError(e); } } }, 500); });
+  win.on('will-move', event => { if (store.state.settings.positionFixed) event.preventDefault(); });
+  win.on('move', () => {
+    if (store.state.settings.positionFixed && fixedBounds && !sameBounds(win.getBounds(), fixedBounds)) {
+      win.setBounds(fixedBounds); return;
+    }
+    clearTimeout(moveTimer);
+    moveTimer = setTimeout(() => {
+      if (!quitting && win && !win.isDestroyed() && !store.state.settings.compactMode) {
+        try { store.saveBounds(win.getBounds()); } catch (e) { reportError(e); }
+      }
+    }, 500);
+  });
   win.on('close', async event => {
     if (quitting || isTest) return;
     if (store.state.settings.closeToTray && tray) {
@@ -286,8 +307,8 @@ async function start() {
       win.hide();
     } else { quitting = true; app.quit(); }
   });
-  screen.on('display-removed', () => win.setBounds(clampBounds(win.getBounds())));
-  screen.on('display-metrics-changed', () => win.setBounds(clampBounds(win.getBounds())));
+  screen.on('display-removed', positionWindow);
+  screen.on('display-metrics-changed', positionWindow);
   powerMonitor.on('resume', clockCheck);
   lastLevels = new Map(store.state.tasks.map(t => [t.id, effectiveLevel(t)]));
   timer = setInterval(clockCheck, 60_000);

@@ -1,6 +1,24 @@
 (function (root) {
   'use strict';
   const english = {
+  "固定位置": "Fix position",
+  "解锁位置": "Unlock position",
+  "位置已固定": "Position fixed",
+  "拖动此处移动": "Drag here to move",
+  "鼠标穿透中": "Mouse clicks pass through",
+  "停靠右上角": "Dock at top right",
+  "停靠位置": "Panel position",
+  "停靠位置无效": "Invalid panel position",
+  "右上角": "Top right",
+  "手动位置": "Manual position",
+  "右侧留白（像素）": "Right margin (px)",
+  "为右侧桌面文件留出空间": "Leave room for desktop files on the right",
+  "右侧留白应为 0–480 像素": "Right margin must be 0\u2013480 pixels",
+  "禁止拖动窗口，仍可操作任务和拖入文件": "Prevent window dragging; tasks and file drops still work",
+  "面板和小窗均不置顶。解锁后拖动顶部空白处，再固定位置。": "Neither panel stays on top. Unlock, drag the top strip, then fix its position.",
+  "缩为小窗": "Switch to small panel",
+  "面板工具": "Panel tools",
+
   "锁定": "Locked",
   "0 表示未估时": "0 means not estimated",
   "30 分钟后提醒": "Remind in 30 min",

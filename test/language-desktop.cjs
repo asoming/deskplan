@@ -21,7 +21,7 @@ async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await
  await until(()=>js('document.documentElement.lang==="en-US"'),'English switch');
  assert.equal(runtime.store.state.settings.language,'en');
  assert.equal(await js('document.querySelector("#settings-title").textContent'),'Settings and backup');
- assert.equal(await js('document.querySelector(".brand span").textContent'),'Rixu');
+ assert.equal(await js('document.title'),'Rixu');
  assert.match(await js('document.querySelector(".due").textContent'),/Due in/);
  assert.equal(await js('document.querySelector(".task-title").textContent'),title);
  assert.equal(await js('document.querySelector("#task-title").placeholder'),'What needs doing?');
@@ -33,7 +33,7 @@ async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await
  assert.match(await js('document.querySelector(".month-heading").textContent'),/[A-Za-z]/);
  if(runtime.viewState().native.unlockShortcutRegistered || runtime.viewState().native.trayAvailable){
    await call('window:lock',{locked:true});
-   assert.equal(await js('getComputedStyle(document.querySelector(".brand"),"::after").content'),'"Locked"');
+   assert.equal(await js('document.querySelector("#position-status").textContent'),'Mouse clicks pass through');
    await call('window:lock',{locked:false});
  }
  await js(`document.querySelector('[data-edit="${id}"]').click()`);

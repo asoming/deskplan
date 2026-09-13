@@ -30,3 +30,26 @@ dialog{padding:0;color:var(--ink);background:var(--surface);border:1px solid var
 @media(prefers-reduced-motion:reduce){.desktop-blend *{transition:none!important}}
 
 :root:lang(en){font-family:system-ui,-apple-system,"Segoe UI",sans-serif}:root:lang(en) .app-menu{width:205px}:root:lang(en) .save-status{flex-shrink:0}
+
+/* A narrow tool strip leaves the desktop panel to its tasks. */
+.app-window{display:grid;grid-template-columns:44px minmax(0,1fr);grid-template-rows:28px minmax(0,1fr) auto}
+.tool-rail{grid-column:1;grid-row:1 / -1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;min-height:0;overflow-y:auto;overflow-x:hidden;border-right:1px solid color-mix(in srgb,var(--line) calc(45% * var(--alpha)),transparent);scrollbar-width:thin}
+.tool-rail .view-tabs,.tool-rail .toolbar-controls{display:flex;flex-direction:column;gap:2px;padding:0;border:0;width:100%;flex-shrink:0}
+.tool-rail button{position:relative;display:flex;align-items:center;justify-content:center;width:32px;height:27px;min-height:27px;min-width:0;padding:4px;color:var(--muted);flex-shrink:0;opacity:1}
+.tool-rail button[aria-current="true"],.tool-rail button[aria-pressed="true"]{color:var(--accent);background:color-mix(in srgb,var(--accent) calc(9% * var(--alpha)),transparent)}
+.tool-rail button[aria-current="true"]:before{content:"";position:absolute;left:-4px;top:8px;height:11px;width:2px;background:currentColor;border-radius:2px}
+.tool-rail #inbox-count{position:absolute;right:0;top:0;font-size:8px;line-height:10px;opacity:1}
+.rail-divider{height:1px;background:color-mix(in srgb,var(--line) calc(50% * var(--alpha)),transparent);width:18px;margin:5px 0;flex-shrink:0}.rail-spacer{flex:1;min-height:6px}
+.toolbar,.desktop-blend .toolbar,.compact-mode .toolbar{grid-column:2;grid-row:1;height:28px;padding:0 12px;border:0;gap:12px;justify-content:space-between;color:var(--muted);font-size:10px;cursor:move}
+.position-fixed .toolbar{ -webkit-app-region:no-drag;cursor:default}
+#position-status{font-size:9px;opacity:.65;white-space:nowrap}#view-caption{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:var(--text-alpha)}
+.workspace,#compact-panel{grid-column:2;grid-row:2;min-height:0;min-width:0}.statusbar{grid-column:2;grid-row:3;padding:6px 12px;min-height:30px}
+.opacity-popover{left:49px;right:auto;top:114px;max-height:calc(100% - 125px);overflow:auto}
+.app-menu{left:49px;right:auto;top:auto;bottom:42px;max-height:calc(100% - 55px);overflow:auto}
+.compact-mode .tool-rail .view-tabs,.compact-mode .rail-divider,.compact-mode #search-button,.compact-mode #calendar-toggle,.compact-mode #opacity-button,.compact-mode #blend-toggle,.compact-mode #settings-button,.compact-mode #menu-button{display:none}
+.compact-mode #compact-panel{padding:2px 12px 10px}.compact-mode #view-caption{display:none}
+.desktop-blend.quiet-controls .tool-rail{opacity:.25;transition:opacity .18s}
+.desktop-blend.quiet-controls .tool-rail .toolbar-controls,.desktop-blend.quiet-controls .tool-rail .view-tabs{opacity:1}
+.desktop-blend.quiet-controls .app-window:hover .tool-rail,.desktop-blend.quiet-controls.keyboard-navigation .app-window:focus-within .tool-rail{opacity:1}
+.panel-locked .tool-rail{visibility:hidden}
+@media(max-height:480px){.tool-rail{gap:0;padding-top:3px;padding-bottom:3px}.tool-rail button{height:23px;min-height:23px}.tool-rail .view-tabs,.tool-rail .toolbar-controls{gap:0}}

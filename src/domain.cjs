@@ -6,10 +6,11 @@ const { HOUR, remainingHours, effectiveLevel, urgency } = require('./renderer/ti
 const DEFAULT_SETTINGS = {
   transparency: 35, theme: 'system', alwaysOnTop: false, calendarOpen: false,
   notifications: false, remindBefore: false, remindAt: true, closeToTray: true,
-  closeExplained: false, autoStart: false, windowSize: 'normal',
+  closeExplained: false, autoStart: false, windowSize: 'compact',
   textTransparency: 0, view: 'quadrants', compactMode: false, quickCapture: true,
   quickShortcut: 'CommandOrControl+Shift+Space', dailyCapacity: 360,
   desktopBlend: false, quietControls: true, language: 'zh-CN',
+  positionFixed: true, windowPosition: 'top-right', desktopInset: 0,
 };
 
 function invariant(condition, message) { if (!condition) throw new Error(message); }
@@ -75,6 +76,9 @@ function validateSettings(patch) {
   for (const [key, value] of Object.entries(patch || {})) {
     if (!(key in DEFAULT_SETTINGS)) continue;
     if (['transparency', 'textTransparency'].includes(key)) { invariant(Number.isFinite(value) && value >= 0 && value <= 100, '透明度应在 0–100% 之间'); next[key] = value; }
+    else if (key === 'alwaysOnTop') { invariant(typeof value === 'boolean', '设置值无效'); next[key] = false; }
+    else if (key === 'windowPosition') { invariant(['top-right', 'manual'].includes(value), '停靠位置无效'); next[key] = value; }
+    else if (key === 'desktopInset') { invariant(Number.isInteger(value) && value >= 0 && value <= 480, '右侧留白应为 0–480 像素'); next[key] = value; }
     else if (key === 'language') { invariant(['zh-CN', 'en'].includes(value), '语言设置无效'); next[key] = value; }
     else if (key === 'view') { invariant(['quadrants', 'today', 'week', 'inbox'].includes(value), '视图无效'); next[key] = value; }
     else if (key === 'quickShortcut') { invariant(['CommandOrControl+Shift+Space', 'Alt+Shift+Space'].includes(value), '快捷键无效'); next[key] = value; }

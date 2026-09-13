@@ -13,7 +13,7 @@ seed.create({title:'做一份秋日旅行清单',inbox:true,level:3});seed.creat
 seed.plan(a,{day:today,focus:true});seed.plan(b,{day:today,focus:true});
 seed.create({title:'确认设计交付',level:0,plannedDate:days[0],estimatedMinutes:120});seed.create({title:'集中写作',level:2,plannedDate:days[2],estimatedMinutes:420});
 const late=seed.create({title:'回复合作邮件',level:0,due:new Date(Date.now()-3600000).toISOString(),plannedDate:today,estimatedMinutes:15});
-seed.saveSettings({theme:'light',view:'today',transparency:15,quickShortcut:'Alt+Shift+Space'});
+seed.saveSettings({windowSize:'normal',theme:'light',view:'today',transparency:15,quickShortcut:'Alt+Shift+Space'});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await sleep(30);}throw Error('Timeout: '+label);}
 (async()=>{
  const runtime=await require('../src/main.cjs').start(),win=runtime.window,s=runtime.store;win.show();
@@ -41,9 +41,9 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  await until(()=>Promise.resolve(!q.isVisible()),'capture hides');assert.equal(s.state.tasks.at(-1).title,'从快捷输入记录');assert.equal(s.state.tasks.at(-1).inbox,true);
  const unauthorized=await q.webContents.executeJavaScript(`window.fourfold.call('state').then(()=>'accepted').catch(()=> 'denied')`,true);assert.equal(unauthorized,'denied');
  await shot('日序-收集箱.png');
- await call('current',{id:b});await call('window:compact',{enabled:true});assert.equal(win.isAlwaysOnTop(),true);assert.deepEqual(win.getSize(),[390,320]);
+ await call('current',{id:b});await call('window:compact',{enabled:true});assert.equal(win.isAlwaysOnTop(),false);assert.deepEqual(win.getSize(),[390,320]);
  await until(()=>js('document.querySelectorAll(".compact-task").length===3'),'compact queue');assert.equal(await js('document.querySelector(".current-task .task-title").textContent'),'阅读一章书');
- await shot('日序-置顶小窗.png');await call('window:compact',{enabled:false});assert.deepEqual(win.getSize(),[960,640]);
+ await shot('日序-小窗.png');await call('window:compact',{enabled:false});assert.deepEqual(win.getSize(),[960,640]);
  await call('settings',{view:'quadrants',calendarOpen:true});await shot('日序-四象限.png');
  const colors=await js('[...document.querySelectorAll(".zone-heading h2")].map(e=>getComputedStyle(e).color)');assert.equal(new Set(colors).size,4);
  await call('settings',{transparency:100,textTransparency:0});
@@ -60,5 +60,5 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  await call('settings',{theme:'system'}); win.webContents.debugger.attach('1.3'); await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'dark'}]}); assert.equal(await js('getComputedStyle(document.documentElement).getPropertyValue("--surface-rgb").trim()'),'30,48,40'); win.webContents.debugger.detach();
  assert.deepEqual(errors,[]);
  const restored=new Store(s.directory);assert.equal(restored.state.schemaVersion,3);assert.equal(restored.state.tasks.at(-1).title,'从快捷输入记录');
- console.log(JSON.stringify({passed:true,directory:dir,checks:['top3 limit','drag reorder/demote','week independent deadline','overload indicator','global shortcut registration','quick capture save/hide','quick window IPC restrictions','compact size/always-on-top/queue','four distinct colors','100% transparent surfaces','independent text opacity','keep/cancel/undo','schema 3 persistence','screenshots/no renderer errors']}));app.quit();
+ console.log(JSON.stringify({passed:true,directory:dir,checks:['top3 limit','drag reorder/demote','week independent deadline','overload indicator','global shortcut registration','quick capture save/hide','quick window IPC restrictions','compact size/not on top/queue','four distinct colors','100% transparent surfaces','independent text opacity','keep/cancel/undo','schema 3 persistence','screenshots/no renderer errors']}));app.quit();
 })().catch(e=>{console.error(e);app.exit(1);});
