@@ -5,9 +5,9 @@
 
 Rixu is a minimal, local-first desktop planner. Today, Week, four urgency zones and Inbox share the same tasks. Drop in files, plan your days, adjust transparency, and switch to a small always-on-top window when you want to focus.
 
-No account. Works offline. No ads, telemetry, or background cloud synchronization. The application UI is currently in Simplified Chinese; documentation is available in Chinese and English.
+No account. Works offline. No ads, telemetry, or background cloud synchronization. The app and documentation support Chinese and English. Open **More → Settings and backup → 语言 / Language** to switch instantly. Your choice is remembered; your task content stays unchanged.
 
-![Rixu desktop blend mode](docs/images/desktop-blend.png)
+![Rixu desktop blend mode](docs/images/english-planner.png)
 
 ## Belong on the desktop
 
@@ -41,13 +41,13 @@ Get the matching asset from [GitHub Releases](https://github.com/asoming/rixu/re
 
 | Platform | Asset |
 | --- | --- |
-| Debian / Ubuntu x64 | `Rixu-1.0.0-linux-x64.deb` |
-| Other Linux x64 | `Rixu-1.0.0-linux-x64.tar.gz` |
-| Windows x64 | `Rixu-1.0.0-windows-x64-setup.exe` |
-| macOS Apple Silicon | `Rixu-1.0.0-mac-arm64.dmg` or `.zip` |
-| macOS Intel | `Rixu-1.0.0-mac-x64.dmg` or `.zip` |
+| Debian / Ubuntu x64 | `Rixu-1.0.1-linux-x64.deb` |
+| Other Linux x64 | `Rixu-1.0.1-linux-x64.tar.gz` |
+| Windows x64 | `Rixu-1.0.1-windows-x64-setup.exe` |
+| macOS Apple Silicon | `Rixu-1.0.1-mac-arm64.dmg` or `.zip` |
+| macOS Intel | `Rixu-1.0.1-mac-x64.dmg` or `.zip` |
 
-Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.0-linux-x64.deb`.
+Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.1-linux-x64.deb`.
 
 Release notes record actual build, test and signing status. Developer signing certificates are not configured: Windows builds are not Authenticode-signed; macOS builds are ad-hoc signed and not Apple-notarized. Operating-system checks may appear on first launch. Do not disable global operating-system security protections.
 
@@ -68,6 +68,7 @@ npm start
 npm test
 npm run test:desktop
 npm run test:release
+npm run test:language
 npm run package:linux  # Linux host
 npm run package:win    # Windows host
 npm run package:mac    # macOS host

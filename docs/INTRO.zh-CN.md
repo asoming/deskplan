@@ -13,3 +13,5 @@
 所有任务首先属于你的电脑。无需账号，离线运行，自动备份，可导出 JSON 与 CSV。v1.0 聚焦单人桌面计划，没有云同步和团队协作。
 
 Windows、Linux 和两种 Mac 架构都有对应构建流程。具体下载、测试记录和代码签名状态以 [Release](https://github.com/asoming/rixu/releases/latest) 为准。
+
+应用支持简体中文和英文。在「设置与备份 → 语言 / Language」即时切换，重启后保留选择，任务内容与未提交草稿保持原样。

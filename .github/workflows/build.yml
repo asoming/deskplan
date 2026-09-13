@@ -54,10 +54,10 @@ jobs:
           sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
       - name: Test native Linux UI
         if: runner.os == 'Linux'
-        run: xvfb-run -a sh -c 'openbox >/tmp/rixu-openbox.log 2>&1 & npm run test:desktop && npm run test:planner && npm run test:release'
+        run: xvfb-run -a sh -c 'openbox >/tmp/rixu-openbox.log 2>&1 & npm run test:desktop && npm run test:planner && npm run test:release && npm run test:language'
       - name: Test native Windows and macOS UI
         if: runner.os != 'Linux'
-        run: npm run test:desktop && npm run test:planner && npm run test:release
+        run: npm run test:desktop && npm run test:planner && npm run test:release && npm run test:language
       - name: Build distributables
         run: node scripts/build.cjs ${{ matrix.target }}
         env:

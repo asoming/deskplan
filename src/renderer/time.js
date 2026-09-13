@@ -3,9 +3,15 @@
   const remainingHours = (task, now = Date.now()) => task.due ? (Date.parse(task.due) - now) / HOUR : Infinity;
   const effectiveLevel = (task, now = Date.now()) => task.status === 'active' && task.level === 1 && remainingHours(task, now) <= 48 ? 0 : task.level;
   function urgency(task, now = Date.now()) { const h = remainingHours(task, now); return h < 0 ? 'late' : h <= 24 ? 'red' : h <= 48 ? 'hot' : h <= 168 ? 'warm' : 'calm'; }
-  function remainingLabel(task, now = Date.now()) {
+  function remainingLabel(task, now = Date.now(), language = 'zh-CN') {
     const h = remainingHours(task, now);
     if (h === Infinity) return '';
+    if (language === 'en') {
+      if (h < 0) return -h < 24 ? 'Overdue' : `${Math.ceil(-h / 24)} days overdue`;
+      if (h === 0) return 'Due now';
+      if (h < 1) return `Due in ${Math.ceil(h * 60)} min`;
+      return h <= 48 ? `Due in ${Math.ceil(h)} h` : `Due in ${Math.ceil(h / 24)} days`;
+    }
     if (h < 0) return -h < 24 ? '已逾期' : `逾期 ${Math.ceil(-h / 24)} 天`;
     if (h === 0) return '现在截止';
     if (h < 1) return `剩 ${Math.ceil(h * 60)} 分钟`;

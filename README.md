@@ -5,7 +5,7 @@
 
 日序是一个简洁、本地优先的桌面计划软件。今天、本周、紧急程度四象限和收集箱共用同一份任务；你可以拖入文件、安排日期、调整透明度，再把它缩成安静的置顶小窗。
 
-无需账号，离线可用。没有广告、遥测或后台云同步。应用界面目前为简体中文；说明文档提供中文和英文。
+无需账号，离线可用。没有广告、遥测或后台云同步。应用与文档都支持中文和英文。点击「更多 → 设置与备份 → 语言 / Language」即可即时切换，选择会自动保存。任务、备注与文件名不会被翻译。
 
 ![日序桌面融合模式](docs/images/desktop-blend.png)
 
@@ -41,13 +41,13 @@
 
 | 系统 | 文件 |
 | --- | --- |
-| Debian / Ubuntu，x64 | `Rixu-1.0.0-linux-x64.deb` |
-| 其他 Linux，x64 | `Rixu-1.0.0-linux-x64.tar.gz` |
-| Windows，x64 | `Rixu-1.0.0-windows-x64-setup.exe` |
-| macOS，Apple Silicon | `Rixu-1.0.0-mac-arm64.dmg` 或 `.zip` |
-| macOS，Intel | `Rixu-1.0.0-mac-x64.dmg` 或 `.zip` |
+| Debian / Ubuntu，x64 | `Rixu-1.0.1-linux-x64.deb` |
+| 其他 Linux，x64 | `Rixu-1.0.1-linux-x64.tar.gz` |
+| Windows，x64 | `Rixu-1.0.1-windows-x64-setup.exe` |
+| macOS，Apple Silicon | `Rixu-1.0.1-mac-arm64.dmg` 或 `.zip` |
+| macOS，Intel | `Rixu-1.0.1-mac-x64.dmg` 或 `.zip` |
 
-Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.0-linux-x64.deb`。
+Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.1-linux-x64.deb`。
 
 发行说明会记录实际构建、测试及签名状态。本项目尚未配置开发者代码签名证书：Windows 安装程序未做 Authenticode 签名，macOS 使用临时签名，未进行 Apple 公证。首次打开可能受到系统检查；这与安装包能否构建、应用能否运行是不同的验证项。不要关闭系统的全局安全保护。
 
@@ -70,6 +70,7 @@ npm start
 npm test
 npm run test:desktop
 npm run test:release
+npm run test:language
 npm run package:linux  # 在 Linux
 npm run package:win    # 在 Windows
 npm run package:mac    # 在 macOS

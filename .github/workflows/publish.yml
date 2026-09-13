@@ -1,11 +1,21 @@
 name: Publish verified release
 on:
   workflow_dispatch:
+    inputs:
+      build_run:
+        description: Successful four-platform build run ID
+        required: true
+        type: string
+      version:
+        description: Release version
+        required: true
+        default: '1.0.1'
+        type: string
 permissions:
   contents: write
   actions: read
 concurrency:
-  group: publish-v1.0.0
+  group: publish-release
   cancel-in-progress: false
 jobs:
   publish:
@@ -14,34 +24,37 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      VERIFIED_RUN: '34739972059'
-      VERIFIED_SHA: '7cc9316dbca1e6d493a00bf46e03d3c23f093a8f'
+      VERIFIED_RUN: ${{ inputs.build_run }}
+      VERSION: ${{ inputs.version }}
     steps:
       - uses: actions/checkout@v4
-      - name: Verify immutable source build
+      - name: Verify source build
         run: |
           gh run view "$VERIFIED_RUN" --json headSha,status,conclusion,url,jobs > workflow.json
           python3 - <<'PY'
-          import json,os,subprocess
+          import json,os,re,subprocess
           r=json.load(open('workflow.json'))
-          assert r['headSha']==os.environ['VERIFIED_SHA']
+          assert re.fullmatch(r'\d+\.\d+\.\d+',os.environ['VERSION'])
           assert r['status']=='completed' and r['conclusion']=='success'
           assert len(r['jobs'])==4 and all(j['conclusion']=='success' for j in r['jobs'])
-          expected=json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GH_REPO']}/contents/package.json?ref={os.environ['VERIFIED_SHA']}",'-H','Accept: application/vnd.github.raw+json']))
-          assert expected['version']=='1.0.0'
+          assert r['headSha']==subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          meta=json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GH_REPO']}/actions/runs/{os.environ['VERIFIED_RUN']}"]))
+          assert meta['path']=='.github/workflows/build.yml'
+          assert json.load(open('package.json'))['version']==os.environ['VERSION']
+          with open(os.environ['GITHUB_ENV'],'a') as f:f.write('VERIFIED_SHA='+r['headSha']+'\n')
           PY
-      - name: Download only verified artifacts
+      - name: Download verified artifacts
         run: |
           gh run download "$VERIFIED_RUN" --pattern 'release-*' --dir artifacts
           gh run download "$VERIFIED_RUN" --pattern 'tests-*' --dir evidence
-      - name: Prepare checksums and release evidence
+      - name: Prepare checksums and evidence
         run: |
           python3 - <<'PY'
-          import pathlib,shutil,json,hashlib,zipfile
-          out=pathlib.Path('release');out.mkdir()
+          import pathlib,shutil,json,hashlib,zipfile,os
+          version=os.environ['VERSION'];out=pathlib.Path('release');out.mkdir()
           files=list(pathlib.Path('artifacts').glob('release-*/*'))
-          expected={'Rixu-1.0.0-linux-x64.deb','Rixu-1.0.0-linux-x64.tar.gz','Rixu-1.0.0-windows-x64-setup.exe','Rixu-1.0.0-mac-arm64.dmg','Rixu-1.0.0-mac-arm64.zip','Rixu-1.0.0-mac-x64.dmg','Rixu-1.0.0-mac-x64.zip'}
-          assert len(files)==7 and {p.name for p in files}==expected
+          suffixes=['linux-x64.deb','linux-x64.tar.gz','windows-x64-setup.exe','mac-arm64.dmg','mac-arm64.zip','mac-x64.dmg','mac-x64.zip']
+          assert len(files)==7 and {p.name for p in files}=={f'Rixu-{version}-{s}' for s in suffixes}
           checks=[]
           for p in sorted(files,key=lambda p:p.name):
               assert p.is_file() and p.stat().st_size>10_000_000
@@ -49,20 +62,22 @@ jobs:
               shutil.copy2(p,out/p.name)
           (out/'SHA256SUMS.txt').write_text('\n'.join(checks)+'\n')
           reports=list(pathlib.Path('evidence').glob('tests-*/*.json'))
-          assert len(reports)==16
+          assert len(reports)==20
           for p in reports:
               report=json.loads(p.read_text());assert report['passed'] is True
-              if 'sandbox' in report: assert report['sandbox'] is True
-          with zipfile.ZipFile(out/'Rixu-1.0.0-test-reports.zip','w',zipfile.ZIP_DEFLATED) as z:
+              if 'sandbox' in report:assert report['sandbox'] is True
+          with zipfile.ZipFile(out/f'Rixu-{version}-test-reports.zip','w',zipfile.ZIP_DEFLATED) as z:
               z.write('workflow.json','workflow.json')
               for p in sorted(reports):z.write(p,p.relative_to('evidence'))
-          shutil.copy2('docs/releases/1.0.0-verification.md',out/'RELEASE-VERIFICATION.md')
-          shutil.copy2('docs/PRD.zh-CN.md',out/'Rixu-1.0.0-PRD.zh-CN.md')
+          r=json.load(open('workflow.json'))
+          lines=[f'# Rixu {version} / 日序发行验证', '', f'Commit: `{r["headSha"]}`', '', f'[Four-platform validation]({r["url"]})', '', 'All four platform jobs passed. Includes native language switching and packaged/installed process restart tests with the sandbox enabled.', '', '四个平台均通过，包含应用内语言切换、任务与草稿保留、打包与安装后重启测试。', '', 'Windows is unsigned; macOS is ad-hoc signed and not notarized. OS-native controls may follow the system language.']
+          (out/'RELEASE-VERIFICATION.md').write_text('\n'.join(lines)+'\n')
+          shutil.copy2('docs/PRD.zh-CN.md',out/f'Rixu-{version}-PRD.zh-CN.md')
           PY
-      - name: Publish version 1.0.0
+      - name: Publish release
         run: |
-          gh release create v1.0.0 release/* --target "$VERIFIED_SHA" --title '日序 · Rixu 1.0.0' --notes-file docs/releases/1.0.0.md --latest
-          gh release view v1.0.0 --json url,isDraft,isPrerelease,assets > published.json
+          gh release create "v$VERSION" release/* --target "$VERIFIED_SHA" --title "日序 · Rixu $VERSION" --notes-file "docs/releases/$VERSION.md" --latest
+          gh release view "v$VERSION" --json url,isDraft,isPrerelease,assets > published.json
           python3 - <<'PY'
           import json
           r=json.load(open('published.json'))

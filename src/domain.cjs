@@ -9,7 +9,7 @@ const DEFAULT_SETTINGS = {
   closeExplained: false, autoStart: false, windowSize: 'normal',
   textTransparency: 0, view: 'quadrants', compactMode: false, quickCapture: true,
   quickShortcut: 'CommandOrControl+Shift+Space', dailyCapacity: 360,
-  desktopBlend: false, quietControls: true,
+  desktopBlend: false, quietControls: true, language: 'zh-CN',
 };
 
 function invariant(condition, message) { if (!condition) throw new Error(message); }
@@ -75,6 +75,7 @@ function validateSettings(patch) {
   for (const [key, value] of Object.entries(patch || {})) {
     if (!(key in DEFAULT_SETTINGS)) continue;
     if (['transparency', 'textTransparency'].includes(key)) { invariant(Number.isFinite(value) && value >= 0 && value <= 100, '透明度应在 0–100% 之间'); next[key] = value; }
+    else if (key === 'language') { invariant(['zh-CN', 'en'].includes(value), '语言设置无效'); next[key] = value; }
     else if (key === 'view') { invariant(['quadrants', 'today', 'week', 'inbox'].includes(value), '视图无效'); next[key] = value; }
     else if (key === 'quickShortcut') { invariant(['CommandOrControl+Shift+Space', 'Alt+Shift+Space'].includes(value), '快捷键无效'); next[key] = value; }
     else if (key === 'dailyCapacity') { invariant(Number.isInteger(value) && value >= 30 && value <= 1440, '每日容量应为 30–1440 分钟'); next[key] = value; }

@@ -12,4 +12,4 @@ Rixu can become a quiet layer on your desktop: subtle borders, independent text 
 
 Your tasks live on your computer. There is no account requirement; the app works offline, keeps backups, and exports JSON or CSV. Version 1.0 focuses on individual desktop planning, without cloud sync or team collaboration.
 
-Build workflows cover Windows, Linux, Apple Silicon Macs and Intel Macs. See the [release](https://github.com/asoming/rixu/releases/latest) for actual downloads, test evidence and code-signing status. The current application interface is Simplified Chinese.
+Build workflows cover Windows, Linux, Apple Silicon Macs and Intel Macs. See the [release](https://github.com/asoming/rixu/releases/latest) for actual downloads, test evidence and code-signing status. The interface supports Simplified Chinese and English, with instant switching in Settings and a saved language preference. Your own task content is never translated.

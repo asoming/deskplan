@@ -1,10 +1,10 @@
 # Validation / 验证说明
 
-Rixu 1.0.0 uses three layers of validation. Actual platform results are attached to the release; workflow success must refer to its exact commit.
+Rixu 1.0.1 uses three layers of validation. Actual platform results are attached to the release; workflow success must refer to its exact commit.
 
 ## Unit and persistence tests
 
-`npm test` covers 35 tests (one symlink case is skipped on Windows): exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping, and canonical renderer URL validation.
+`npm test` covers 38 tests (one symlink case is skipped on Windows): exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping, and canonical renderer URL validation.
 
 ## Native UI tests
 
@@ -25,3 +25,7 @@ The four-job workflow runs on Linux x64, Windows x64, Apple Silicon macOS and In
 Passing builds and native tests do not prove trusted developer signatures, Apple notarization, compatibility with every Linux compositor, or delivery and click behavior of every OS notification service. Signing state and environment-specific limits remain explicit in README and release notes.
 
 本机 Linux 已验证真实 Ctrl + Shift + 空格唤起与 Esc 收起、透明面板、任务文件拖入、置顶小窗和持久化。跨平台最终结果以 GitHub Actions 及发行页附带报告为准；不把“配置了工作流”等同于“构建已通过”。
+
+## Language switching
+
+`npm run test:language` tests live English/Chinese switching through Settings, all planner views and the calendar, editing without losing drafts, quick capture preferences, localized validation/native dialogs, and task preservation. Packaged and installed app smoke tests fully quit and restart the executable, checking that English and the original task survive. Each platform stores `language-test.json`.

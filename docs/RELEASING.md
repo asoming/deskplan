@@ -5,7 +5,7 @@ The build workflow runs unit tests, native UI tests, creates distributables and 
 1. Change the version in `package.json` and the lockfile. Run the test suites and update bilingual documentation.
 2. Push the commit. Wait for **every** `Build and test desktop releases` matrix job to succeed.
 3. Download the four `release-*` artifacts and retain the `tests-*` reports. Verify artifact names and contents; create SHA-256 checksums over the seven distributables.
-4. Create a release tag targeting the verified commit, attach the verified artifacts and checksums, and publish release notes containing actual platform and signing results. Do not silently label a failed or untested build as verified.
+4. Run the `Publish verified release` workflow on the exact successful build commit, passing its build run ID and version. It rechecks the workflow identity, commit, version and all four jobs, downloads the verified artifacts, creates checksums and publishes the release tag with bilingual notes. Do not silently label a failed or untested build as verified.
 
 ## Signing credentials
 
