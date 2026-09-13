@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>日序</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 3v18M3 12h18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M7 15h1M12 15h1M17 15h1M7 18h1M12 18h1"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H5v20h14V7zM14 2v6h5M8 13h8M8 17h8"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l9-9M7 14l7-7"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="m8 3 8 0-1 7 4 4H5l4-4zM12 14v8"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 3h9v11H3zM3 6V4h7l2 2h8v3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+  </defs></svg>
+
+  <div class="app-window" id="app">
+    <header class="toolbar">
+      <div class="brand"><img src="../assets/icon-64.png" alt="" width="27" height="27"><span>日序</span></div>
+      <div class="toolbar-controls">
+        <button id="opacity-button" class="subtle opacity-button" aria-label="调整背景透明度" aria-expanded="false"><span class="opacity-dot"></span><span id="opacity-label">35%</span></button>
+        <button id="calendar-toggle" aria-label="显示日历" aria-expanded="false"><svg class="icon"><use href="#i-calendar"/></svg><span>日历</span></button>
+        <button id="compact-toggle" aria-label="缩为置顶小窗" title="置顶小窗">小窗</button><button id="new-task" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button>
+        <button id="search-button" aria-label="搜索任务"><svg class="icon"><use href="#i-search"/></svg></button>
+        <button id="menu-button" aria-label="更多" aria-expanded="false"><svg class="icon"><use href="#i-more"/></svg></button>
+        <span class="toolbar-divider"></span>
+        <button id="minimize" class="window-control" aria-label="最小化"><svg class="icon"><use href="#i-minus"/></svg></button>
+        <button id="close-window" class="window-control" aria-label="关闭面板"><svg class="icon"><use href="#i-close"/></svg></button>
+      </div>
+    </header>
+    <div class="popover opacity-popover" id="opacity-popover" hidden>
+      <label for="transparency">背景透明度 <output id="transparency-value">35%</output></label>
+      <input id="transparency" type="range" min="0" max="100" value="35">
+      <div class="range-labels"><span>不透明</span><span>完全透明</span></div>
+      <label for="text-transparency" class="text-opacity-label">文字透明度 <output id="text-transparency-value">0%</output></label><input id="text-transparency" type="range" min="0" max="100" value="0"><small>工具栏保留可见，随时可以恢复。</small><button class="text-button" id="opacity-default">恢复默认</button>
+    </div>
+    <nav class="popover app-menu" id="app-menu" hidden aria-label="更多功能">
+      <button data-view="completed">已完成</button><button data-view="deleted">回收站</button>
+      <button data-view="cancelled">已取消</button><button id="quick-open">随手记</button><hr><button id="pin-toggle">始终置顶</button><button id="settings-button">设置与备份</button>
+      <hr><button id="quit">退出日序</button>
+    </nav>
+    <nav class="view-tabs" aria-label="任务视图"><button data-tab="today">今天</button><button data-tab="week">本周</button><button data-tab="quadrants">四象限</button><button data-tab="inbox">收集箱 <span id="inbox-count"></span></button><span class="spacer"></span><span id="view-caption"></span></nav>
+    <section id="compact-panel" hidden></section>
+    <div class="workspace" id="workspace">
+      <main id="planner" class="planner" hidden></main>
+      <main id="board" class="board" aria-label="四档任务分区"></main>
+      <aside id="calendar" class="calendar" aria-label="截止日历" hidden></aside>
+    </div>
+    <footer class="statusbar"><span id="task-count">正在加载…</span><div id="toast" role="status" aria-live="polite"></div><button id="undo" class="text-button" hidden>撤销</button><span id="save-status" class="save-status">本地保存</span></footer>
+  </div>
+
+  <dialog id="task-dialog" class="task-dialog" aria-labelledby="task-dialog-title">
+    <form id="task-form">
+      <div class="dialog-heading"><span id="task-dialog-title">任务详情</span><button type="button" id="editor-close" aria-label="关闭详情"><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <div class="editor-body">
+        <label class="field title-field"><span>任务</span><input name="title" id="task-title" required maxlength="160" autocomplete="off" placeholder="要做什么？"></label>
+        <div class="field-row"><label class="field"><span>分区</span><select name="level" id="task-level"><option value="0">马上做</option><option value="1">尽快做</option><option value="2">按计划做</option><option value="3">先放着</option></select></label><label class="field"><span>截止时间</span><input name="due" id="task-due" type="datetime-local"></label></div>
+        <div class="field-row"><label class="field"><span>计划哪天做 <small>不会改变截止时间</small></span><input id="task-planned" type="date"></label><label class="field"><span>预计耗时（分钟） <small>0 表示未估时</small></span><input id="task-estimate" type="number" min="0" max="1440" step="1" value="0"></label></div>
+        <label class="check-field"><input type="checkbox" id="task-inbox"><span>先放入收集箱，暂不安排</span></label>
+        <p id="auto-hint" class="inline-hint" hidden>距截止不超过 48 小时，显示在「马上做」。改期后会重新判断。</p>
+        <label class="field"><span>备注 <small>可选</small></span><textarea name="notes" id="task-notes" rows="3" maxlength="5000" placeholder="记下下一步，或需要留意的事"></textarea></label>
+        <div class="attachment-header"><span>关联文件 <small id="attachment-count"></small></span><button type="button" id="attach-files" class="text-button"><svg class="icon"><use href="#i-plus"/></svg>添加文件</button></div>
+        <div id="attachments" class="attachments"></div>
+        <label class="check-field reminder-field"><input type="checkbox" id="task-reminder" name="reminder" checked><span>允许截止提醒 <small>需在设置中开启通知</small></span></label>
+        <p id="editor-error" class="form-error" role="alert" hidden></p>
+      </div>
+      <div class="dialog-footer"><button type="button" id="delete-task" class="danger-text">删除任务</button><span class="spacer"></span><button type="button" id="complete-task">标记完成</button><button class="primary" type="submit" id="save-task">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="library-dialog" class="library-dialog" aria-labelledby="library-title">
+    <div class="dialog-heading"><span id="library-title">搜索任务</span><button data-close="library-dialog" aria-label="关闭列表"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <div class="library-tools"><input id="search-input" type="search" placeholder="搜索任务、备注或文件名" aria-label="搜索任务"><select id="library-filter" aria-label="任务状态"><option value="all">待办与已完成</option><option value="active">待办</option><option value="completed">已完成</option><option value="cancelled">已取消</option><option value="deleted">回收站</option></select></div>
+    <div id="library-list" class="library-list"></div>
+  </dialog>
+
+  <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
+    <div class="dialog-heading"><span id="settings-title">设置与备份</span><button data-close="settings-dialog" aria-label="关闭设置"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <div class="settings-body">
+      <section><h2>面板</h2><label class="setting-row"><span>外观</span><select data-setting="theme"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></label>
+      <label class="setting-row"><span>窗口大小</span><select data-setting="windowSize"><option value="compact">紧凑 · 760 × 540</option><option value="normal">标准 · 960 × 640</option><option value="large">宽敞 · 1180 × 760</option></select></label>
+      <label class="setting-row"><span>始终置顶</span><input type="checkbox" data-setting="alwaysOnTop"></label>
+      <label class="setting-row"><span>关闭面板后留在后台</span><input type="checkbox" data-setting="closeToTray"></label>
+      <label class="setting-row"><span>开机启动 <small id="autostart-hint"></small></span><input type="checkbox" data-setting="autoStart"></label></section>
+      <section><h2>安排与随手记</h2><label class="setting-row"><span>每日可安排时间（分钟）</span><input type="number" min="30" max="1440" step="30" data-setting="dailyCapacity"></label><label class="setting-row"><span>全局快捷输入 <small id="quick-hint"></small></span><input type="checkbox" data-setting="quickCapture"></label><label class="setting-row"><span>快捷键</span><select data-setting="quickShortcut"><option value="CommandOrControl+Shift+Space">Ctrl / ⌘ + Shift + 空格</option><option value="Alt+Shift+Space">Alt + Shift + 空格</option></select></label></section>
+      <section><h2>提醒</h2><label class="setting-row"><span>启用系统通知 <small id="notification-hint">完全退出应用后不再提醒</small></span><input type="checkbox" data-setting="notifications"></label>
+      <label class="setting-row"><span>截止前 24 小时</span><input type="checkbox" data-setting="remindBefore"></label>
+      <label class="setting-row"><span>到达截止时间</span><input type="checkbox" data-setting="remindAt"></label></section>
+      <section><h2>备份与恢复</h2><p>任务自动保存在这台电脑上。备份包含任务和文件路径，不包含原文件。</p><div class="backup-actions"><button id="export-backup">导出备份</button><button id="restore-backup">恢复备份</button><button id="backup-folder">打开备份目录</button></div><small>每日保留一份滚动备份，最近 7 份；恢复前另存当前数据。</small></section>
+      <p class="about">日序 0.2.0 · 本地优先</p>
+    </div>
+  </dialog>
+
+  <dialog id="review-dialog" class="confirm-dialog" aria-labelledby="review-title"><div class="confirm-body"><h2 id="review-title">处理到期任务</h2><p id="review-task"></p><label class="field"><span>延期至</span><input type="datetime-local" id="review-due"></label><p id="review-error" class="form-error" role="alert"></p><div class="review-actions"><button data-review-choice="cancel" class="danger-text">取消任务</button><button data-review-choice="keep">保留待办</button><button data-review-choice="defer" class="primary">延期</button></div><button class="text-button" data-close="review-dialog">稍后处理</button></div></dialog>
+  <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><div class="confirm-body"><h2 id="confirm-title"></h2><p id="confirm-detail"></p><div id="confirm-actions"></div></div></dialog>
+  <script src="time.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

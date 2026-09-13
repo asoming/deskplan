@@ -1,0 +1,26 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+const root = path.resolve(__dirname, '..');
+const pkg = require('../package.json');
+if (!['linux', 'win32'].includes(process.platform)) throw new Error('此便携打包脚本支持 Linux 和 Windows；macOS 请使用标准签名打包流程。源码可通过 npm start 运行。');
+const distRoot = path.join(root, 'dist');
+const name = `rixu-${pkg.version}-${process.platform}-${process.arch}`;
+const destination = path.join(distRoot, name);
+const binary = process.platform === 'win32' ? 'electron.exe' : 'electron';
+const runtime = path.dirname(require('electron'));
+if (fs.existsSync(destination)) throw new Error(`目标目录已存在：${destination}。请先移走旧构建，避免覆盖。`);
+fs.mkdirSync(distRoot, { recursive: true }); fs.cpSync(runtime, destination, { recursive: true });
+fs.renameSync(path.join(destination, binary), path.join(destination, process.platform === 'win32' ? '日序.exe' : 'rixu'));
+const appDirectory = path.join(destination, 'resources', 'app');
+fs.mkdirSync(appDirectory, { recursive: true });
+fs.cpSync(path.join(root, 'src'), path.join(appDirectory, 'src'), { recursive: true });
+fs.writeFileSync(path.join(appDirectory, 'package.json'), JSON.stringify({ name: pkg.name, productName: pkg.productName, version: pkg.version, main: pkg.main, desktopName: pkg.desktopName }, null, 2));
+fs.copyFileSync(path.join(root, 'README.md'), path.join(destination, '使用说明.md'));
+if (process.platform === 'linux') {
+  fs.writeFileSync(path.join(destination, '启动日序.sh'), '#!/bin/sh\napp_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\nexec "$app_dir/rixu" "$@"\n', { mode: 0o755 });
+  const archive = path.join(distRoot, `${name}.tar.gz`);
+  execFileSync('tar', ['-czf', archive, '-C', distRoot, name]);
+  console.log(archive);
+} else console.log(destination);

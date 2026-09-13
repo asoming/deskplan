@@ -1,0 +1,22 @@
+{
+  "name": "rixu-desktop",
+  "productName": "日序",
+  "version": "0.2.0",
+  "desktopName": "io.rixu.desktop",
+  "private": true,
+  "description": "日序：今天、本周、四象限与随手记录",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "test:desktop": "electron test/desktop-smoke.cjs",
+    "package": "node scripts/package.cjs",
+    "test:planner": "electron test/planner-desktop.cjs"
+  },
+  "devDependencies": {
+    "electron": "44.3.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
