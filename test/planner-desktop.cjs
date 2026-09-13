@@ -27,7 +27,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  await drag(c,`[data-task="${a}"]`);await until(()=>js(`document.querySelector('.focus-grid .task').dataset.task === '${c}'`),'reorder');
  await drag(c,'[data-focus-drop="false"]');await until(()=>Promise.resolve(!s.state.tasks.find(t=>t.id===c).focusDay),'demote');
  await js('document.body.click()');await sleep(150);
- const shots=path.resolve(__dirname,'../../');
+ const shots=process.env.RIXU_ARTIFACTS_DIR||path.join(dir,'artifacts');fs.mkdirSync(shots,{recursive:true});
  async function shot(name){await sleep(150);fs.writeFileSync(path.join(shots,name),(await win.webContents.capturePage()).toPNG());}
  await shot('日序-今天.png');
  await call('settings',{view:'week'});await until(()=>js('document.querySelectorAll(".week-lane").length===7'),'week');
@@ -59,6 +59,6 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  await call('settings',{theme:'dark',view:'today',calendarOpen:false});await shot('日序-深色.png');
  await call('settings',{theme:'system'}); win.webContents.debugger.attach('1.3'); await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'dark'}]}); assert.equal(await js('getComputedStyle(document.documentElement).getPropertyValue("--surface-rgb").trim()'),'30,48,40'); win.webContents.debugger.detach();
  assert.deepEqual(errors,[]);
- const restored=new Store(s.directory);assert.equal(restored.state.schemaVersion,2);assert.equal(restored.state.tasks.at(-1).title,'从快捷输入记录');
- console.log(JSON.stringify({passed:true,directory:dir,checks:['top3 limit','drag reorder/demote','week independent deadline','overload indicator','global shortcut registration','quick capture save/hide','quick window IPC restrictions','compact size/always-on-top/queue','four distinct colors','100% transparent surfaces','independent text opacity','keep/cancel/undo','schema 2 persistence','screenshots/no renderer errors']}));app.quit();
+ const restored=new Store(s.directory);assert.equal(restored.state.schemaVersion,3);assert.equal(restored.state.tasks.at(-1).title,'从快捷输入记录');
+ console.log(JSON.stringify({passed:true,directory:dir,checks:['top3 limit','drag reorder/demote','week independent deadline','overload indicator','global shortcut registration','quick capture save/hide','quick window IPC restrictions','compact size/always-on-top/queue','four distinct colors','100% transparent surfaces','independent text opacity','keep/cancel/undo','schema 3 persistence','screenshots/no renderer errors']}));app.quit();
 })().catch(e=>{console.error(e);app.exit(1);});

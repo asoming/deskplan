@@ -9,6 +9,7 @@ const DEFAULT_SETTINGS = {
   closeExplained: false, autoStart: false, windowSize: 'normal',
   textTransparency: 0, view: 'quadrants', compactMode: false, quickCapture: true,
   quickShortcut: 'CommandOrControl+Shift+Space', dailyCapacity: 360,
+  desktopBlend: false, quietControls: true,
 };
 
 function invariant(condition, message) { if (!condition) throw new Error(message); }
@@ -25,6 +26,16 @@ function planDate(value) {
   return value;
 }
 function minutes(value = 0) { invariant(Number.isInteger(value) && value >= 0 && value <= 1440, '预计耗时应为 0–1440 分钟'); return value; }
+function repeatRule(value = 'none') { invariant(['none', 'daily', 'weekdays', 'weekly', 'monthly'].includes(value), '重复规则无效'); return value; }
+function checklist(value = []) {
+  invariant(Array.isArray(value) && value.length <= 30, '子清单最多 30 项');
+  const ids = new Set();
+  return value.map(item => {
+    const text = cleanText(item?.text, 300).trim(), id = item?.id || randomUUID();
+    invariant(text && typeof id === 'string' && id.length < 100 && !ids.has(id), '子清单内容或标识无效'); ids.add(id);
+    return { id, text, done: !!item.done };
+  });
+}
 function createTask(input, now = Date.now()) {
   const title = cleanText(input.title, 160).trim();
   invariant(title, '请填写任务名称');
@@ -32,7 +43,9 @@ function createTask(input, now = Date.now()) {
   return {
     id: randomUUID(), title, inbox: !!input.inbox && !input.plannedDate, plannedDate: planDate(input.plannedDate),
     estimatedMinutes: minutes(input.estimatedMinutes), order: now, focusDay: null, current: false, cancelledAt: null,
-    reviewedDueVersion: 0, notes: cleanText(input.notes, 5000), level: validateLevel(input.level ?? 1),
+    reviewedDueVersion: 0, snoozeUntil: null, repeat: repeatRule(input.repeat),
+    repeatAnchor: input.repeatAnchor || Number((input.plannedDate || (input.due ? require('./renderer/time.js').dateKey(new Date(input.due)) : time.slice(0, 10))).slice(-2)),
+    previousOccurrenceId: null, checklist: checklist(input.checklist), notes: cleanText(input.notes, 5000), level: validateLevel(input.level ?? 1),
     due: parseDue(input.due), dueVersion: 1, dueChangedAt: time,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     reminder: input.reminder !== false, status: 'active', files: [],
@@ -44,6 +57,8 @@ function patchTask(task, patch, now = Date.now()) {
   if ('title' in patch) { next.title = cleanText(patch.title, 160).trim(); invariant(next.title, '请填写任务名称'); }
   if ('notes' in patch) next.notes = cleanText(patch.notes, 5000);
   if ('level' in patch) next.level = validateLevel(patch.level);
+  if ('repeat' in patch) { next.repeat = repeatRule(patch.repeat); if (next.repeat !== task.repeat) next.repeatAnchor = Number((patch.plannedDate || task.plannedDate || require('./renderer/time.js').dateKey(new Date(patch.due || task.due || now))).slice(-2)); }
+  if ('checklist' in patch) next.checklist = checklist(patch.checklist);
   if ('reminder' in patch) next.reminder = !!patch.reminder;
   if ('plannedDate' in patch) { next.plannedDate = planDate(patch.plannedDate); if (next.plannedDate) next.inbox = false; }
   if ('inbox' in patch) { next.inbox = !!patch.inbox; if (next.inbox) { next.plannedDate = null; next.focusDay = null; next.current = false; } }
@@ -51,7 +66,7 @@ function patchTask(task, patch, now = Date.now()) {
   if (next.focusDay && next.plannedDate && next.plannedDate > next.focusDay) next.focusDay = null;
   if ('due' in patch) {
     next.due = parseDue(patch.due);
-    if (next.due !== task.due) { next.dueVersion++; next.dueChangedAt = next.updatedAt; }
+    if (next.due !== task.due) { next.dueVersion++; next.dueChangedAt = next.updatedAt; next.snoozeUntil = null; }
   }
   return next;
 }
@@ -70,10 +85,10 @@ function validateSettings(patch) {
   return next;
 }
 function emptyState() {
-  return { schemaVersion: 2, tasks: [], settings: { ...DEFAULT_SETTINGS }, reminderLedger: {}, windowBounds: null };
+  return { schemaVersion: 3, tasks: [], settings: { ...DEFAULT_SETTINGS }, reminderLedger: {}, windowBounds: null };
 }
 function validateState(data) {
-  invariant(data && [1, 2].includes(data.schemaVersion) && Array.isArray(data.tasks), '备份格式或版本不受支持');
+  invariant(data && [1, 2, 3].includes(data.schemaVersion) && Array.isArray(data.tasks), '备份格式或版本不受支持');
   invariant(data.tasks.length <= 10000, '任务数量超过当前支持范围');
   const state = emptyState(), ids = new Set();
   state.settings = { ...state.settings, ...validateSettings(data.settings) };
@@ -94,6 +109,9 @@ function validateState(data) {
       id: t.id, title: t.title.trim(), inbox: !!t.inbox, plannedDate: planDate(t.plannedDate),
       estimatedMinutes: minutes(t.estimatedMinutes), order: Number.isFinite(t.order) ? t.order : Date.parse(createdAt),
       focusDay: planDate(t.focusDay), current: !!t.current, cancelledAt: parseDue(t.cancelledAt),
+      repeat: repeatRule(t.repeat), repeatAnchor: Number.isInteger(t.repeatAnchor) && t.repeatAnchor >= 1 && t.repeatAnchor <= 31 ? t.repeatAnchor : Number((t.plannedDate || require('./renderer/time.js').dateKey(new Date(t.due || createdAt))).slice(-2)),
+      previousOccurrenceId: typeof t.previousOccurrenceId === 'string' ? t.previousOccurrenceId.slice(0, 100) : null,
+      snoozeUntil: parseDue(t.snoozeUntil), checklist: checklist(t.checklist),
       reviewedDueVersion: Number.isSafeInteger(t.reviewedDueVersion) ? t.reviewedDueVersion : 0, notes: cleanText(t.notes, 5000), level: validateLevel(t.level),
       due: parseDue(t.due), dueVersion: Math.max(1, Number.isSafeInteger(t.dueVersion) ? t.dueVersion : 1),
       dueChangedAt: parseDue(t.dueChangedAt) || createdAt, timezone: cleanText(t.timezone, 100),
@@ -102,6 +120,7 @@ function validateState(data) {
       deletedAt: parseDue(t.deletedAt), previousStatus: ['completed', 'cancelled'].includes(t.previousStatus) ? t.previousStatus : 'active',
     };
   });
+  for (const t of state.tasks) invariant(t.repeat === 'none' || (!t.inbox && (t.plannedDate || t.due)), '重复任务请先安排日期，或关闭重复后放入收集箱');
   const focusCounts = new Map();
   for (const t of state.tasks.filter(t => t.status === 'active')) {
     if (t.focusDay) { const count = (focusCounts.get(t.focusDay) || 0) + 1; invariant(count <= 3, '每天最多选 3 件重要任务'); focusCounts.set(t.focusDay, count); }
@@ -124,7 +143,12 @@ function pendingReminders(state, previous, now = Date.now()) {
   if (!state.settings.notifications) return [];
   const result = [];
   for (const task of state.tasks) {
-    if (task.status !== 'active' || !task.reminder || !task.due || task.reviewedDueVersion >= task.dueVersion) continue;
+    if (task.status !== 'active' || !task.reminder) continue;
+    if (task.snoozeUntil) {
+      const at = Date.parse(task.snoozeUntil), key = `${task.id}:${task.dueVersion}:snooze:${task.snoozeUntil}`;
+      if (!state.reminderLedger[key] && at > previous && at <= now) result.push({ key, taskId: task.id, title: task.title, kind: 'snooze', at });
+    }
+    if (!task.due || task.reviewedDueVersion >= task.dueVersion || task.snoozeUntil) continue;
     const due = Date.parse(task.due), changed = Date.parse(task.dueChangedAt);
     for (const [kind, enabled, at] of [['before', state.settings.remindBefore, due - 24 * HOUR], ['due', state.settings.remindAt, due]]) {
       const key = `${task.id}:${task.dueVersion}:${kind}`;

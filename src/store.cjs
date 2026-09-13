@@ -5,6 +5,7 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { emptyState, validateState, validateSettings, createTask, patchTask } = require('./domain.cjs');
 const { dateKey, byOrder } = require('./renderer/time.js');
+const { nextOccurrence } = require('./recurrence.cjs');
 const clone = value => JSON.parse(JSON.stringify(value));
 
 function atomicWrite(file, content) {
@@ -76,7 +77,14 @@ class Store {
   status(id, action) {
     this.mutate(s => {
       const task = this.task(s, id), now = new Date().toISOString();
-      if (action === 'complete' && task.status === 'active') { task.status = 'completed'; task.completedAt = now; }
+      if (action === 'complete' && task.status === 'active') {
+        const recurrence = nextOccurrence(task);
+        if (recurrence && !s.tasks.some(t => t.previousOccurrenceId === task.id)) {
+          const next = createTask({ ...task, ...recurrence, checklist: task.checklist.map(item => ({ ...item, done: false })) });
+          next.files = clone(task.files); next.previousOccurrenceId = task.id; s.tasks.push(next);
+        }
+        task.status = 'completed'; task.completedAt = now;
+      }
       else if (action === 'delete' && task.status !== 'deleted') { task.previousStatus = task.status; task.status = 'deleted'; task.deletedAt = now; }
       else if (action === 'restore' && task.status === 'deleted') { task.status = task.previousStatus || 'active'; task.deletedAt = null; }
       else if (action === 'cancel' && task.status === 'active') { task.status = 'cancelled'; task.cancelledAt = now; }
@@ -108,13 +116,14 @@ class Store {
     });
   }
   review(id, choice, due) {
+    if (choice === 'snooze') return this.mutate(s => { const t = this.task(s, id); if (t.status !== 'active') throw new Error('任务已结束'); t.snoozeUntil = new Date(Date.now() + 30 * 60000).toISOString(); t.reminder = true; t.reviewedDueVersion = t.dueVersion; });
     if (choice === 'cancel') return this.status(id, 'cancel');
     if (choice === 'defer') {
       if (!due || Date.parse(due) <= Date.now()) throw new Error('延期时间应晚于现在');
       return this.update(id, { due });
     }
     if (choice !== 'keep') throw new Error('处理方式无效');
-    this.mutate(s => { const t = this.task(s, id); t.reviewedDueVersion = t.dueVersion; });
+    this.mutate(s => { const t = this.task(s, id); t.reviewedDueVersion = t.dueVersion; t.snoozeUntil = null; });
   }
   attach(id, files) {
     this.mutate(s => {

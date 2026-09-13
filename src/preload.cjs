@@ -1,6 +1,6 @@
 'use strict';
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
-const allowed = new Set(['plan', 'current', 'review', 'window:compact', 'quick:show', 'quick:hide', 'quick:create', 'state', 'create', 'update', 'status', 'undo', 'purge', 'settings', 'files:select', 'files:pick', 'files:remove', 'files:relink', 'files:check', 'files:open', 'backup:export', 'backup:restore', 'backup:folder', 'window:minimize', 'window:close', 'window:quit']);
+const allowed = new Set(['window:lock', 'export:csv', 'plan', 'current', 'review', 'window:compact', 'quick:show', 'quick:hide', 'quick:create', 'state', 'create', 'update', 'status', 'undo', 'purge', 'settings', 'files:select', 'files:pick', 'files:remove', 'files:relink', 'files:check', 'files:open', 'backup:export', 'backup:restore', 'backup:folder', 'window:minimize', 'window:close', 'window:quit']);
 async function invoke(name, payload) {
   const result = await ipcRenderer.invoke(`fourfold:${name}`, payload);
   if (!result.ok) throw new Error(result.error);

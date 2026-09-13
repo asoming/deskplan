@@ -13,6 +13,8 @@
   const fullDate = value => value ? new Date(value).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '未设置截止时间';
   const taskDay = task => task.due ? dateKey(new Date(task.due)) : '';
   let state, now = Date.now(), month = new Date(new Date().getFullYear(), new Date().getMonth(), 1), selectedDay = '', draggedId = null;
+  let draftChecklist = [];
+  const repeatLabels = { daily: '每天', weekdays: '工作日', weekly: '每周', monthly: '每月' };
   let editingId = null, editorInitial = '', draftFiles = [], availability = new Map(), toastTimer, busy = false;
 
   function toast(text, undo = false) {
@@ -32,6 +34,11 @@
   }
   function receive(next) {
     state = next; now = Date.now(); document.documentElement.dataset.theme = state.settings.theme;
+    document.body.classList.toggle('desktop-blend', state.settings.desktopBlend);
+    document.body.classList.toggle('quiet-controls', state.settings.quietControls);
+    document.body.classList.toggle('panel-locked', state.native.panelLocked);
+    $('#blend-toggle').setAttribute('aria-pressed', String(state.settings.desktopBlend));
+    $('#lock-panel').textContent = state.native.panelLocked ? '解锁面板' : '锁定并穿透鼠标';
     setTransparency(state.settings.transparency); setTextTransparency(state.settings.textTransparency);
     $('#calendar').hidden = !state.settings.calendarOpen;
     $('#workspace').classList.toggle('with-calendar', state.settings.calendarOpen);
@@ -56,12 +63,12 @@
   }
   function taskHTML(t) {
     const auto = t.level === 1 && effectiveLevel(t, now) === 0;
-    return `<article class="task" data-task="${esc(t.id)}" draggable="true" data-priority="${effectiveLevel(t, now)}" data-heat="${urgency(t, now)}" data-selected="${!!selectedDay && taskDay(t) === selectedDay}"><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-edit="${esc(t.id)}">${esc(t.title)}</button></div>${t.due || t.files.length || t.estimatedMinutes ? `<div class="task-meta">${t.estimatedMinutes ? `<span>${t.estimatedMinutes} 分钟</span>` : ''}<span class="due" title="${esc(fullDate(t.due))}">${remainingLabel(t, now)}</span>${auto ? '<span class="auto-label">自动移入</span>' : ''}${t.files.length ? `<span class="file-tag">${icon('clip')}<span>${esc(t.files[0].name)}${t.files.length > 1 ? ` +${t.files.length - 1}` : ''}</span></span>` : ''}</div>` : ''}<div class="task-tools"><button data-start="${esc(t.id)}" title="设为当前任务">${t.current ? '正在做' : '开始'}</button>${t.due && remainingHours(t, now) <= 0 ? `<button data-review="${esc(t.id)}">处理到期</button>` : ''}<button data-today="${esc(t.id)}" title="安排今天做">今天做</button></div></article>`;
+    return `<article class="task" data-task="${esc(t.id)}" draggable="true" data-priority="${effectiveLevel(t, now)}" data-heat="${urgency(t, now)}" data-selected="${!!selectedDay && taskDay(t) === selectedDay}"><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-edit="${esc(t.id)}">${esc(t.title)}</button></div>${t.due || t.files.length || t.estimatedMinutes || t.repeat !== 'none' || t.checklist.length ? `<div class="task-meta">${t.estimatedMinutes ? `<span>${t.estimatedMinutes} 分钟</span>` : ''}${t.repeat !== 'none' ? `<span class="repeat-tag">↻ ${repeatLabels[t.repeat]}</span>` : ''}${t.checklist.length ? `<span>☑ ${t.checklist.filter(i => i.done).length}/${t.checklist.length}</span>` : ''}<span class="due" title="${esc(fullDate(t.due))}">${remainingLabel(t, now)}</span>${auto ? '<span class="auto-label">自动移入</span>' : ''}${t.files.length ? `<span class="file-tag">${icon('clip')}<span>${esc(t.files[0].name)}${t.files.length > 1 ? ` +${t.files.length - 1}` : ''}</span></span>` : ''}</div>` : ''}<div class="task-tools"><button data-start="${esc(t.id)}" title="设为当前任务">${t.current ? '正在做' : '开始'}</button>${t.due && remainingHours(t, now) <= 0 ? `<button data-review="${esc(t.id)}">处理到期</button>` : ''}<button data-today="${esc(t.id)}" title="安排今天做">今天做</button></div></article>`;
   }
   let weekOffset = 0, reviewingId = null;
   function planRow(t, top = false) {
     const today = dateKey(new Date(now));
-    return `<article class="plan-task task" data-task="${esc(t.id)}" draggable="true" data-priority="${effectiveLevel(t, now)}" data-heat="${urgency(t, now)}"><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-edit="${esc(t.id)}">${esc(t.title)}</button>${!t.inbox ? `<button class="focus-star ${top ? 'chosen' : ''}" data-focus="${esc(t.id)}" title="${top ? '移出今天最重要的三件事' : '加入今天最重要的三件事'}" aria-label="${top ? '取消重要' : '标为重要'}">${top ? '★' : '☆'}</button>` : ''}</div><div class="task-meta"><span>${t.estimatedMinutes ? `${t.estimatedMinutes} 分钟` : '未估时'}</span>${t.due ? `<span class="due" title="${esc(fullDate(t.due))}">${remainingLabel(t, now)}</span>` : ''}${plannedDay(t) && plannedDay(t) < today ? '<span>之前待办</span>' : ''}${t.files.length ? `<span>${icon('clip')} ${t.files.length}</span>` : ''}</div><div class="task-tools">${t.inbox ? `<button data-today="${esc(t.id)}">安排今天</button><button data-edit="${esc(t.id)}">选择日期</button>` : `<button data-start="${esc(t.id)}">${t.current ? '正在做' : '开始'}</button>`}${t.due && remainingHours(t, now) <= 0 ? `<button data-review="${esc(t.id)}">处理到期</button>` : ''}</div></article>`;
+    return `<article class="plan-task task" data-task="${esc(t.id)}" draggable="true" data-priority="${effectiveLevel(t, now)}" data-heat="${urgency(t, now)}"><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-edit="${esc(t.id)}">${esc(t.title)}</button>${!t.inbox ? `<button class="focus-star ${top ? 'chosen' : ''}" data-focus="${esc(t.id)}" title="${top ? '移出今天最重要的三件事' : '加入今天最重要的三件事'}" aria-label="${top ? '取消重要' : '标为重要'}">${top ? '★' : '☆'}</button>` : ''}</div><div class="task-meta">${t.repeat !== 'none' ? `<span>↻ ${repeatLabels[t.repeat]}</span>` : ''}${t.checklist.length ? `<span>☑ ${t.checklist.filter(i => i.done).length}/${t.checklist.length}</span>` : ''}<span>${t.estimatedMinutes ? `${t.estimatedMinutes} 分钟` : '未估时'}</span>${t.due ? `<span class="due" title="${esc(fullDate(t.due))}">${remainingLabel(t, now)}</span>` : ''}${plannedDay(t) && plannedDay(t) < today ? '<span>之前待办</span>' : ''}${t.files.length ? `<span>${icon('clip')} ${t.files.length}</span>` : ''}</div><div class="task-tools">${t.inbox ? `<button data-today="${esc(t.id)}">安排今天</button><button data-edit="${esc(t.id)}">选择日期</button>` : `<button data-start="${esc(t.id)}">${t.current ? '正在做' : '开始'}</button>`}${t.due && remainingHours(t, now) <= 0 ? `<button data-review="${esc(t.id)}">处理到期</button>` : ''}</div></article>`;
   }
   function renderPlanner() {
     if (!state) return;
@@ -121,7 +128,7 @@
     if (e.target.closest('#capture-inbox')) await call('quick:show');
     const review = e.target.closest('[data-review]'); if (review) await reviewTask(review.dataset.review);
     const choice = e.target.closest('[data-review-choice]'); if (choice) {
-      try { await call('review', { id: reviewingId, choice: choice.dataset.reviewChoice, due: $('#review-due').value ? new Date($('#review-due').value).toISOString() : null }); $('#review-dialog').close(); toast('已处理', true); }
+      try { await call('review', { id: reviewingId, choice: choice.dataset.reviewChoice, due: $('#review-due').value ? new Date($('#review-due').value).toISOString() : null }); $('#review-dialog').close(); toast(choice.dataset.reviewChoice === 'snooze' ? (state.settings.notifications ? '30 分钟后提醒，截止时间不变' : '已安排稍后提醒；请在设置开启系统通知') : '已处理', true); }
       catch (e) { $('#review-error').textContent = e.message; }
     }
   }));
@@ -155,7 +162,7 @@
   function editorValue() {
     const previous = state.tasks.find(t => t.id === editingId), localDue = $('#task-due').value;
     const due = localDue === localTime(previous?.due) ? (previous?.due || null) : localDue ? new Date(localDue).toISOString() : null;
-    return { plannedDate: $('#task-planned').value || null, estimatedMinutes: Number($('#task-estimate').value), inbox: $('#task-inbox').checked, title: $('#task-title').value.trim(), level: Number($('#task-level').value), due, notes: $('#task-notes').value, reminder: $('#task-reminder').checked };
+    return { repeat: $('#task-repeat').value, checklist: draftChecklist, plannedDate: $('#task-planned').value || null, estimatedMinutes: Number($('#task-estimate').value), inbox: $('#task-inbox').checked, title: $('#task-title').value.trim(), level: Number($('#task-level').value), due, notes: $('#task-notes').value, reminder: $('#task-reminder').checked };
   }
   function editorSignature() { return JSON.stringify({ ...editorValue(), paths: draftFiles.map(f => f.path) }); }
   async function closeEditor() {
@@ -176,12 +183,25 @@
     $('#task-dialog-title').textContent = t ? '任务详情' : '新建任务';
     $('#task-title').value = source.title; $('#task-level').value = source.level; $('#task-due').value = localTime(source.due); $('#task-notes').value = source.notes; $('#task-reminder').checked = source.reminder;
     $('#task-planned').value = source.plannedDate || ''; $('#task-estimate').value = source.estimatedMinutes || 0; $('#task-inbox').checked = !!source.inbox;
+    $('#task-repeat').value = source.repeat || 'none'; draftChecklist = (source.checklist || []).map(item => ({ ...item })); $('#task-checklist').value = draftChecklist.map(item => item.text).join('\n'); renderChecklist();
     $('#delete-task').hidden = !t || t.status === 'deleted'; $('#complete-task').hidden = !t || t.status !== 'active';
     $('#editor-error').hidden = true; $('#save-task').disabled = false;
     updateAutoHint(); editorInitial = editorSignature(); renderAttachments();
     $('#task-dialog').showModal(); $('#task-title').focus();
     if (t) { const checked = await call('files:check', { taskId: id }); if (editingId === id) { availability = new Map(checked.map(f => [f.id, f.available])); renderAttachments(); } }
   }
+  function renderChecklist() {
+    $('#checklist-progress').textContent = draftChecklist.length ? `${draftChecklist.filter(i => i.done).length}/${draftChecklist.length}` : '';
+    $('#checklist-items').innerHTML = draftChecklist.map((item, i) => `<label class="check-field"><input type="checkbox" data-check-item="${i}" ${item.done ? 'checked' : ''}><span>${esc(item.text)}</span></label>`).join('');
+  }
+  $('#task-checklist').oninput = () => {
+    const old = [...draftChecklist];
+    draftChecklist = $('#task-checklist').value.split('\n').map(s => s.trim()).filter(Boolean).map(text => {
+      const index = old.findIndex(item => item.text === text);
+      return index >= 0 ? old.splice(index, 1)[0] : { id: crypto.randomUUID(), text, done: false };
+    }); renderChecklist();
+  };
+  $('#checklist-items').onchange = e => { if (e.target.dataset.checkItem !== undefined) { draftChecklist[Number(e.target.dataset.checkItem)].done = e.target.checked; renderChecklist(); } };
   function updateAutoHint() {
     const t = { status: 'active', level: Number($('#task-level').value), due: $('#task-due').value || null };
     $('#auto-hint').hidden = !(t.level === 1 && effectiveLevel(t, now) === 0);
@@ -228,6 +248,7 @@
     $('[data-setting="autoStart"]').disabled = !state.native.autoStartSupported;
     $('#autostart-hint').textContent = state.native.autoStartSupported ? '' : '打包后的桌面版可用';
     $('[data-setting="notifications"]').disabled = !state.native.notificationsSupported;
+    document.querySelector('.about').textContent = `日序 ${state.native.version || '1.0.0'} · 本地优先`;
     $('#notification-hint').textContent = state.native.notificationsSupported ? '完全退出应用后不再提醒' : '当前系统无法发送原生通知';
   }
   async function reschedule(id, targetDay) {
@@ -251,6 +272,9 @@
   $('#text-transparency').oninput = e => setTextTransparency(Number(e.target.value));
   $('#text-transparency').onchange = action(e => call('settings', { textTransparency: Number(e.target.value) }));
   $('#compact-toggle').onclick = action(async () => { if (await closeEditor()) await call('window:compact', { enabled: !state.settings.compactMode }); });
+  $('#blend-toggle').onclick = action(() => call('settings', { desktopBlend: !state.settings.desktopBlend, ...(state.settings.desktopBlend ? {} : { transparency: Math.max(state.settings.transparency, 65) }) }));
+  $('#lock-panel').onclick = action(() => { closePopovers(); return call('window:lock', { locked: !state.native.panelLocked }); });
+  $('#export-csv').onclick = action(async () => { if (await call('export:csv')) toast('已导出 CSV 表格'); });
   $('#quick-open').onclick = action(() => call('quick:show'));
   $('#task-planned').oninput = () => { if ($('#task-planned').value) $('#task-inbox').checked = false; };
   $('#task-inbox').onchange = () => { if ($('#task-inbox').checked) $('#task-planned').value = ''; };

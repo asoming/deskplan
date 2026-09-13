@@ -5,20 +5,24 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { Store, atomicWrite } = require('./store.cjs');
+const { exportCSV } = require('./export.cjs');
 const { effectiveLevel, pendingReminders, validateSettings } = require('./domain.cjs');
 
 // Keep the existing data directory across the product rename.
 app.setPath('userData', path.join(app.getPath('appData'), '四格'));
 app.setName('日序');
 if (process.platform === 'linux') app.setDesktopName('io.rixu.desktop');
-if (process.platform === 'win32') app.setAppUserModelId('io.rixu.desktop');
+if (process.platform === 'win32') app.setAppUserModelId('io.rixu');
 // This panel has no GPU-dependent content. Software rendering also works on remote Linux desktops.
 if (process.platform === 'linux') app.disableHardwareAcceleration();
-if (process.env.FOURFOLD_DATA_DIR) app.setPath('userData', path.resolve(process.env.FOURFOLD_DATA_DIR));
-const isTest = process.env.FOURFOLD_TEST === '1';
+const dataDirectory = process.env.RIXU_DATA_DIR || process.env.FOURFOLD_DATA_DIR;
+if (dataDirectory) app.setPath('userData', path.resolve(dataDirectory));
+const isTest = process.env.RIXU_TEST === '1' || process.env.FOURFOLD_TEST === '1';
 const sizes = { compact: [760, 540], normal: [960, 640], large: [1180, 760] };
 const indexFile = path.join(__dirname, 'renderer', 'index.html');
 const indexURL = pathToFileURL(indexFile).href;
+let panelLocked = false, unlockRegistered = false;
+const unlockShortcut = 'CommandOrControl+Shift+L';
 let quickWin, quickRegistered = false, registeredAccelerator = null, normalBounds;
 let win, tray, store, quitting = false, timer, lastCheck = Date.now(), lastLevels = new Map(), moveTimer;
 
@@ -26,13 +30,13 @@ function viewState() {
   return {
     ...store.snapshot(), canUndo: store.history.length > 0, recoveryNotice: store.recoveryNotice,
     native: { platform: process.platform, notificationsSupported: Notification.isSupported(), trayAvailable: !!tray,
-      quickShortcutRegistered: quickRegistered,
+      quickShortcutRegistered: quickRegistered, panelLocked, unlockShortcutRegistered: unlockRegistered, version: require('../package.json').version,
       autoStartSupported: process.platform !== 'linux' || app.isPackaged },
   };
 }
 function broadcast() { if (win && !win.isDestroyed()) win.webContents.send('fourfold:state', viewState()); }
 function message(text) { if (win && !win.isDestroyed()) win.webContents.send('fourfold:message', text); }
-function showWindow(taskId) { if (taskId && store.state.settings.compactMode) { store.saveSettings({ compactMode: false }); applySettings(); broadcast(); } if (!win || win.isDestroyed()) return; win.show(); if (win.isMinimized()) win.restore(); win.focus(); if (taskId) win.webContents.send('fourfold:locate', taskId); }
+function showWindow(taskId) { if (panelLocked) setPanelLocked(false); if (taskId && store.state.settings.compactMode) { store.saveSettings({ compactMode: false }); applySettings(); broadcast(); } if (!win || win.isDestroyed()) return; win.show(); if (win.isMinimized()) win.restore(); win.focus(); if (taskId) win.webContents.send('fourfold:locate', taskId); }
 function reportError(error) { console.error(error); message(error.message || '操作未完成，请重试'); }
 function taskFile(taskId, fileId) {
   const task = store.state.tasks.find(t => t.id === taskId), file = task?.files.find(f => f.id === fileId);
@@ -58,6 +62,7 @@ function clampBounds(bounds) {
 }
 function applySettings() {
   nativeTheme.themeSource = store.state.settings.theme;
+  win.setHasShadow(!store.state.settings.desktopBlend);
   win.setAlwaysOnTop(store.state.settings.compactMode || store.state.settings.alwaysOnTop);
   const [width, height] = store.state.settings.compactMode ? [390, 320] : sizes[store.state.settings.windowSize];
   win.setBounds(clampBounds({ ...win.getBounds(), width, height }));
@@ -71,15 +76,16 @@ function setAutoStart(enabled) {
     fs.mkdirSync(folder, { recursive: true });
     if (enabled) {
       const executable = process.execPath.replace(/["\\`$]/g, '\\$&');
-      atomicWrite(file, `[Desktop Entry]\nType=Application\nName=日序\nExec="${executable}"\nTerminal=false\nX-GNOME-Autostart-enabled=true\n`);
+      atomicWrite(file, `[Desktop Entry]\nType=Application\nName=日序\nExec="${executable}" --hidden\nTerminal=false\nX-GNOME-Autostart-enabled=true\n`);
     } else if (fs.existsSync(file)) fs.unlinkSync(file);
-  } else app.setLoginItemSettings({ openAtLogin: enabled });
+  } else app.setLoginItemSettings({ openAtLogin: enabled, args: ['--hidden'] });
 }
 function updateTray() {
   if (!tray) return;
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: '显示日序', click: () => showWindow() },
     { label: '随手记', click: () => showQuickCapture() },
+    { label: panelLocked ? '解锁面板' : '锁定并穿透鼠标', enabled: unlockRegistered || !!tray, click: () => { try { setPanelLocked(!panelLocked); } catch (e) { reportError(e); } } },
     { label: '恢复可见', click: () => { store.saveSettings({ transparency: 35, textTransparency: 0, compactMode: false }); applySettings(); broadcast(); showWindow(); } },
     { label: '始终置顶', type: 'checkbox', checked: store.state.settings.alwaysOnTop, click: item => { try { store.saveSettings({ alwaysOnTop: item.checked }); applySettings(); broadcast(); } catch (e) { reportError(e); } } },
     { type: 'separator' }, { label: '退出日序', click: () => { quitting = true; app.quit(); } },
@@ -87,7 +93,7 @@ function updateTray() {
 }
 function createTray() {
   try {
-    const image = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray.png'));
+    const image = nativeImage.createFromPath(path.join(__dirname, 'assets', process.platform === 'darwin' ? 'trayTemplate.png' : 'tray.png'));
     if (process.platform === 'darwin') image.setTemplateImage(true);
     tray = new Tray(image.resize({ width: 20, height: 20 }));
     tray.setToolTip('日序 · 桌面计划'); tray.on('click', () => showWindow()); updateTray();
@@ -105,7 +111,7 @@ function clockCheck() {
       const missed = now - lastCheck > 120_000;
       const groups = reminders.length > 1 || missed ? [reminders] : reminders.map(r => [r]);
       for (const group of groups) {
-        const notification = new Notification({ title: group.length > 1 || missed ? '日序 · 待处理提醒' : (group[0].kind === 'before' ? '距截止还有 24 小时' : '任务已到截止时间'),
+        const notification = new Notification({ title: group.length > 1 || missed ? '日序 · 待处理提醒' : (group[0].kind === 'before' ? '距截止还有 24 小时' : group[0].kind === 'snooze' ? '日序 · 稍后提醒' : '任务已到截止时间'),
           body: group.length > 1 ? `${new Set(group.map(r => r.taskId)).size} 件任务需要处理，打开日序查看。` : group[0].title,
           icon: path.join(__dirname, 'assets', 'icon.png') });
         notification.on('click', () => { showWindow(); win.webContents.send('fourfold:review', group[0].taskId); }); notification.show();
@@ -116,6 +122,13 @@ function clockCheck() {
   } catch (e) { reportError(e); }
 }
 
+function setPanelLocked(locked) {
+  if (locked && !unlockRegistered && !tray) throw new Error('没有可用的解锁入口；请先启用托盘或释放 Ctrl/⌘ + Shift + L');
+  panelLocked = locked;
+  win.setIgnoreMouseEvents(locked, { forward: true });
+  if (locked) win.blur();
+  broadcast(); updateTray();
+}
 function registerQuickShortcut() {
   const accelerator = store.state.settings.quickCapture ? store.state.settings.quickShortcut : null;
   if (accelerator === registeredAccelerator && quickRegistered) return;
@@ -150,6 +163,7 @@ function registerIPC() {
     plan: async ({ id, ...options }) => { store.plan(id, options); broadcast(); },
     current: async ({ id }) => { store.startCurrent(id); broadcast(); },
     review: async ({ id, choice, due }) => { store.review(id, choice, due); broadcast(); },
+    'window:lock': async ({ locked }) => setPanelLocked(!!locked),
     'window:compact': async ({ enabled }) => setCompact(!!enabled),
     'quick:show': async () => showQuickCapture(),
     'quick:hide': async () => quickWin?.hide(),
@@ -185,6 +199,11 @@ function registerIPC() {
       const file = taskFile(taskId, fileId); if (!fs.existsSync(file.path)) throw new Error('文件不可用，请重新定位');
       if (folder) shell.showItemInFolder(file.path);
       else { const error = await shell.openPath(file.path); if (error) throw new Error(`无法打开文件：${error}`); }
+    },
+    'export:csv': async () => {
+      const result = await dialog.showSaveDialog(win, { title: '导出任务表格', defaultPath: 'Rixu-tasks.csv', filters: [{ name: 'CSV', extensions: ['csv'] }] });
+      if (result.canceled || !result.filePath) return false;
+      atomicWrite(result.filePath, exportCSV(store.state.tasks)); return true;
     },
     'backup:export': async () => {
       const result = await dialog.showSaveDialog(win, { title: '导出备份（不含原文件）', defaultPath: `日序备份-${new Date().toISOString().slice(0, 10)}.json`, filters: [{ name: '日序备份', extensions: ['json'] }] });
@@ -229,7 +248,8 @@ async function start() {
   win.webContents.on('will-navigate', event => event.preventDefault());
   win.webContents.on('will-attach-webview', event => event.preventDefault());
   win.setAlwaysOnTop(store.state.settings.alwaysOnTop);
-  Menu.setApplicationMenu(null);
+  Menu.setApplicationMenu(process.platform === 'darwin' ? Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }, { role: 'windowMenu' }]) : null);
+  unlockRegistered = globalShortcut.register(unlockShortcut, () => { try { setPanelLocked(!panelLocked); if (!panelLocked) showWindow(); } catch (e) { reportError(e); } });
   createTray(); registerIPC(); registerQuickShortcut(); applySettings();
   win.on('move', () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => { if (!quitting && win && !win.isDestroyed() && !store.state.settings.compactMode) { try { store.saveBounds(win.getBounds()); } catch (e) { reportError(e); } } }, 500); });
   win.on('close', async event => {
@@ -250,8 +270,8 @@ async function start() {
   lastLevels = new Map(store.state.tasks.map(t => [t.id, effectiveLevel(t)]));
   timer = setInterval(clockCheck, 60_000);
   await win.loadFile(indexFile);
-  if (!isTest) win.show();
-  return { window: win, store, clockCheck, viewState, showQuickCapture, getQuickWindow: () => quickWin };
+  if (!isTest && (!process.argv.includes('--hidden') || !tray)) win.show();
+  return { window: win, store, clockCheck, viewState, showQuickCapture, setPanelLocked, getQuickWindow: () => quickWin };
 }
 
 app.on('will-quit', () => globalShortcut.unregisterAll());

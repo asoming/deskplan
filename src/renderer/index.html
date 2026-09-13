@@ -33,7 +33,7 @@
       <div class="toolbar-controls">
         <button id="opacity-button" class="subtle opacity-button" aria-label="调整背景透明度" aria-expanded="false"><span class="opacity-dot"></span><span id="opacity-label">35%</span></button>
         <button id="calendar-toggle" aria-label="显示日历" aria-expanded="false"><svg class="icon"><use href="#i-calendar"/></svg><span>日历</span></button>
-        <button id="compact-toggle" aria-label="缩为置顶小窗" title="置顶小窗">小窗</button><button id="new-task" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button>
+        <button id="blend-toggle" aria-label="切换桌面融合模式" title="桌面融合模式">融入</button><button id="compact-toggle" aria-label="缩为置顶小窗" title="置顶小窗">小窗</button><button id="new-task" aria-label="新建任务"><svg class="icon"><use href="#i-plus"/></svg></button>
         <button id="search-button" aria-label="搜索任务"><svg class="icon"><use href="#i-search"/></svg></button>
         <button id="menu-button" aria-label="更多" aria-expanded="false"><svg class="icon"><use href="#i-more"/></svg></button>
         <span class="toolbar-divider"></span>
@@ -49,7 +49,7 @@
     </div>
     <nav class="popover app-menu" id="app-menu" hidden aria-label="更多功能">
       <button data-view="completed">已完成</button><button data-view="deleted">回收站</button>
-      <button data-view="cancelled">已取消</button><button id="quick-open">随手记</button><hr><button id="pin-toggle">始终置顶</button><button id="settings-button">设置与备份</button>
+      <button data-view="cancelled">已取消</button><button id="quick-open">随手记</button><button id="lock-panel">锁定并穿透鼠标</button><hr><button id="pin-toggle">始终置顶</button><button id="settings-button">设置与备份</button>
       <hr><button id="quit">退出日序</button>
     </nav>
     <nav class="view-tabs" aria-label="任务视图"><button data-tab="today">今天</button><button data-tab="week">本周</button><button data-tab="quadrants">四象限</button><button data-tab="inbox">收集箱 <span id="inbox-count"></span></button><span class="spacer"></span><span id="view-caption"></span></nav>
@@ -71,6 +71,8 @@
         <div class="field-row"><label class="field"><span>计划哪天做 <small>不会改变截止时间</small></span><input id="task-planned" type="date"></label><label class="field"><span>预计耗时（分钟） <small>0 表示未估时</small></span><input id="task-estimate" type="number" min="0" max="1440" step="1" value="0"></label></div>
         <label class="check-field"><input type="checkbox" id="task-inbox"><span>先放入收集箱，暂不安排</span></label>
         <p id="auto-hint" class="inline-hint" hidden>距截止不超过 48 小时，显示在「马上做」。改期后会重新判断。</p>
+        <label class="field"><span>重复 <small>完成后生成下一次，跳过已过去的日期</small></span><select id="task-repeat"><option value="none">不重复</option><option value="daily">每天</option><option value="weekdays">每个工作日（周一至周五）</option><option value="weekly">每周</option><option value="monthly">每月</option></select></label>
+        <details class="checklist-editor"><summary>子清单 <span id="checklist-progress"></span></summary><label class="field"><span>每行一个步骤，最多 30 项</span><textarea id="task-checklist" rows="3" placeholder="整理资料&#10;写初稿&#10;检查并发送"></textarea></label><div id="checklist-items"></div></details>
         <label class="field"><span>备注 <small>可选</small></span><textarea name="notes" id="task-notes" rows="3" maxlength="5000" placeholder="记下下一步，或需要留意的事"></textarea></label>
         <div class="attachment-header"><span>关联文件 <small id="attachment-count"></small></span><button type="button" id="attach-files" class="text-button"><svg class="icon"><use href="#i-plus"/></svg>添加文件</button></div>
         <div id="attachments" class="attachments"></div>
@@ -90,7 +92,7 @@
   <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
     <div class="dialog-heading"><span id="settings-title">设置与备份</span><button data-close="settings-dialog" aria-label="关闭设置"><svg class="icon"><use href="#i-close"/></svg></button></div>
     <div class="settings-body">
-      <section><h2>面板</h2><label class="setting-row"><span>外观</span><select data-setting="theme"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></label>
+      <section><h2>面板</h2><label class="setting-row"><span>桌面融合 <small>弱化边框、阴影和底色</small></span><input type="checkbox" data-setting="desktopBlend"></label><label class="setting-row"><span>闲置时淡化工具栏 <small>鼠标移入或键盘聚焦时恢复</small></span><input type="checkbox" data-setting="quietControls"></label><p>锁定穿透：更多菜单 → 锁定面板。Ctrl / ⌘ + Shift + L 或托盘可解锁。</p><label class="setting-row"><span>外观</span><select data-setting="theme"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></label>
       <label class="setting-row"><span>窗口大小</span><select data-setting="windowSize"><option value="compact">紧凑 · 760 × 540</option><option value="normal">标准 · 960 × 640</option><option value="large">宽敞 · 1180 × 760</option></select></label>
       <label class="setting-row"><span>始终置顶</span><input type="checkbox" data-setting="alwaysOnTop"></label>
       <label class="setting-row"><span>关闭面板后留在后台</span><input type="checkbox" data-setting="closeToTray"></label>
@@ -99,12 +101,12 @@
       <section><h2>提醒</h2><label class="setting-row"><span>启用系统通知 <small id="notification-hint">完全退出应用后不再提醒</small></span><input type="checkbox" data-setting="notifications"></label>
       <label class="setting-row"><span>截止前 24 小时</span><input type="checkbox" data-setting="remindBefore"></label>
       <label class="setting-row"><span>到达截止时间</span><input type="checkbox" data-setting="remindAt"></label></section>
-      <section><h2>备份与恢复</h2><p>任务自动保存在这台电脑上。备份包含任务和文件路径，不包含原文件。</p><div class="backup-actions"><button id="export-backup">导出备份</button><button id="restore-backup">恢复备份</button><button id="backup-folder">打开备份目录</button></div><small>每日保留一份滚动备份，最近 7 份；恢复前另存当前数据。</small></section>
-      <p class="about">日序 0.2.0 · 本地优先</p>
+      <section><h2>备份与恢复</h2><p>任务自动保存在这台电脑上。备份包含任务和文件路径，不包含原文件。</p><div class="backup-actions"><button id="export-csv">导出 CSV</button><button id="export-backup">导出备份</button><button id="restore-backup">恢复备份</button><button id="backup-folder">打开备份目录</button></div><small>每日保留一份滚动备份，最近 7 份；恢复前另存当前数据。</small></section>
+      <p class="about">日序 1.0.0 · 本地优先</p>
     </div>
   </dialog>
 
-  <dialog id="review-dialog" class="confirm-dialog" aria-labelledby="review-title"><div class="confirm-body"><h2 id="review-title">处理到期任务</h2><p id="review-task"></p><label class="field"><span>延期至</span><input type="datetime-local" id="review-due"></label><p id="review-error" class="form-error" role="alert"></p><div class="review-actions"><button data-review-choice="cancel" class="danger-text">取消任务</button><button data-review-choice="keep">保留待办</button><button data-review-choice="defer" class="primary">延期</button></div><button class="text-button" data-close="review-dialog">稍后处理</button></div></dialog>
+  <dialog id="review-dialog" class="confirm-dialog" aria-labelledby="review-title"><div class="confirm-body"><h2 id="review-title">处理到期任务</h2><p id="review-task"></p><label class="field"><span>延期至</span><input type="datetime-local" id="review-due"></label><p id="review-error" class="form-error" role="alert"></p><div class="review-actions"><button data-review-choice="snooze">30 分钟后提醒</button><button data-review-choice="cancel" class="danger-text">取消任务</button><button data-review-choice="keep">保留待办</button><button data-review-choice="defer" class="primary">延期</button></div><button class="text-button" data-close="review-dialog">稍后处理</button></div></dialog>
   <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><div class="confirm-body"><h2 id="confirm-title"></h2><p id="confirm-detail"></p><div id="confirm-actions"></div></div></dialog>
   <script src="time.js"></script>
   <script src="app.js"></script>

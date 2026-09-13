@@ -1,7 +1,7 @@
 {
   "name": "rixu-desktop",
   "productName": "日序",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "desktopName": "io.rixu.desktop",
   "private": true,
   "description": "日序：今天、本周、四象限与随手记录",
@@ -10,13 +10,28 @@
     "start": "electron .",
     "test": "node --test test/*.test.cjs",
     "test:desktop": "electron test/desktop-smoke.cjs",
-    "package": "node scripts/package.cjs",
-    "test:planner": "electron test/planner-desktop.cjs"
+    "package": "electron-builder --publish never",
+    "test:planner": "electron test/planner-desktop.cjs",
+    "package:linux": "electron-builder --linux deb tar.gz --x64 --publish never",
+    "package:win": "electron-builder --win nsis --x64 --publish never",
+    "package:mac": "electron-builder --mac dmg zip --publish never",
+    "test:release": "electron test/release-desktop.cjs",
+    "test:package": "node scripts/package-smoke.cjs"
   },
   "devDependencies": {
-    "electron": "44.3.0"
+    "electron": "44.3.0",
+    "electron-builder": "26.15.3"
   },
   "engines": {
     "node": ">=22.12.0"
-  }
+  },
+  "author": {
+    "name": "asoming"
+  },
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asoming/rixu.git"
+  },
+  "homepage": "https://github.com/asoming/rixu"
 }

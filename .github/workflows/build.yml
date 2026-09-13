@@ -1,0 +1,88 @@
+name: Build and test desktop releases
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+            arch: x64
+            target: --linux deb tar.gz --x64
+          - os: windows-2025
+            platform: windows
+            arch: x64
+            target: --win nsis --x64
+          - os: macos-15
+            platform: macos
+            arch: arm64
+            target: --mac dmg zip --arm64
+          - os: macos-15-intel
+            platform: macos
+            arch: x64
+            target: --mac dmg zip --x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    env:
+      RIXU_ARTIFACTS_DIR: ${{ github.workspace }}/test-artifacts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb openbox libgtk-3-0 libnss3 libgbm1 libasound2t64 fonts-noto-cjk
+      - name: Test native Linux UI
+        if: runner.os == 'Linux'
+        run: xvfb-run -a sh -c 'openbox >/tmp/rixu-openbox.log 2>&1 & npm run test:desktop && npm run test:release'
+      - name: Test native Windows and macOS UI
+        if: runner.os != 'Linux'
+        run: npm run test:desktop && npm run test:release
+      - name: Build distributables
+        run: npx electron-builder ${{ matrix.target }} --publish never
+        env:
+          CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Test packaged Linux app
+        if: runner.os == 'Linux'
+        run: xvfb-run -a sh -c 'openbox >/tmp/rixu-openbox-package.log 2>&1 & npm run test:package'
+      - name: Test packaged Windows and macOS app
+        if: runner.os != 'Linux'
+        run: npm run test:package
+      - name: Upload distributables
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}-${{ matrix.arch }}
+          if-no-files-found: error
+          path: |
+            dist/Rixu-*.deb
+            dist/Rixu-*.tar.gz
+            dist/Rixu-*.exe
+            dist/Rixu-*.dmg
+            dist/Rixu-*.zip
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-${{ matrix.platform }}-${{ matrix.arch }}
+          path: test-artifacts/
+          if-no-files-found: warn

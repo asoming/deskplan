@@ -2,3 +2,10 @@ node_modules/
 dist/
 .test-data/
 *.log
+
+test-artifacts/
+.DS_Store
+*.pem
+*.p12
+*.pfx
+.env*

@@ -1,15 +1,27 @@
-# 日序 0.2.0 验证
+# Validation / 验证说明
 
-2026-09-13，在本机 Linux X11 桌面运行 Electron 44.3.0。
+Rixu 1.0.0 uses three layers of validation. Actual platform results are attached to the release; workflow success must refer to its exact commit.
 
-- 25 项领域/存储测试通过：48 小时升级边界、提醒去重、时区、旧格式升级、任务及附件持久化、备份恢复、撤销、失败写入、三件重点上限、排序、计划日期与截止隔离、取消/保留/延期、输入校验等。
-- 旧桌面流程通过：真实文件拖入、关联、丢失文件、编辑、截止日历、自动升级、完成撤销、透明度、重启读取及浅深色窗口。
-- 新桌面流程通过：今天三件上限和拖动排序、本周安排不改截止、超容量标记、全局快捷键注册、快速输入保存后收起、快捷窗口 IPC 限制、置顶小窗尺寸与队列、四种分区颜色、背景 100% 透明和独立文字透明度、到期保留/取消/撤销、schema 2 重读。
-- 打包程序验证通过：不带 `--no-sandbox` 启动；界面与本地桥接正常；从界面创建任务落盘；正常退出。
-- 已捕获并检查今天、本周、四象限、收集箱、小窗与深色界面。测试均使用独立数据目录，不向用户任务插入示例。
-- 当前安装版真实 Ctrl + Shift + 空格键盘事件已验证能唤起随手记，Esc 收起，未创建任务。
-- 当前安装的应用菜单、桌面入口、窗口标题 `日序`、WM_CLASS `io.rixu` 和窗口图标已核验。
+## Unit and persistence tests
 
-运行：`npm test`、`npm run test:desktop`、`npm run test:planner`。后两项需要可用的原生桌面会话；测试原生窗口与系统键盘注册无法在纯无桌面环境完整验证。
+`npm test` covers 33 tests: exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping.
 
-尚未验证其他操作系统上的安装、macOS 菜单栏外观、Wayland 全局快捷键和所有桌面合成器的透明效果。未端到端验证每种系统通知服务的实际弹出/点击；提醒时间逻辑与应用内处理流程已验证。
+## Native UI tests
+
+`npm run test:desktop` exercises actual Electron windows and the isolated preload bridge: editor create/update, HTML escaping, calendar selection, task drag, real disk-file drop, deadline promotion, completion/undo, missing attachments, transparent backgrounds and light/dark layouts.
+
+`npm run test:release` exercises desktop blend mode, checklist editing, recurrence generation/undo, recoverable mouse-through locking and independent transparent surfaces/readable text. `npm run test:planner` additionally covers Today reordering, the three-priority limit, the seven-day workload view, quick capture and mini-window behavior.
+
+Source tests use an isolated temporary data directory. Screenshots contain generated examples only. Set `RIXU_ARTIFACTS_DIR` to save screenshots and JSON results. Global shortcuts can be occupied by another running instance; the planner test uses the alternative capture shortcut.
+
+## Packaged app tests
+
+`npm run test:package` launches the distributable's application executable, loads the actual ASAR renderer/preload, creates a task through the UI, verifies schema 3 on disk and checks clean exit. It supports an explicit executable path for testing extracted or installed distributions.
+
+The four-job workflow runs on Linux x64, Windows x64, Apple Silicon macOS and Intel macOS. The default package smoke test keeps the Electron sandbox enabled. A CI-only `RIXU_CI_NO_SANDBOX=1` override exists for environments that cannot expose user namespaces; any use must be recorded in its JSON report rather than represented as a sandboxed run.
+
+## What automation does not prove
+
+Passing builds and native tests do not prove trusted developer signatures, Apple notarization, compatibility with every Linux compositor, or delivery and click behavior of every OS notification service. Signing state and environment-specific limits remain explicit in README and release notes.
+
+本机 Linux 已验证真实 Ctrl + Shift + 空格唤起与 Esc 收起、透明面板、任务文件拖入、置顶小窗和持久化。跨平台最终结果以 GitHub Actions 及发行页附带报告为准；不把“配置了工作流”等同于“构建已通过”。

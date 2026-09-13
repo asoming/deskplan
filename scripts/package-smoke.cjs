@@ -1,0 +1,34 @@
+'use strict';
+const {spawn}=require('node:child_process'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict');
+function findExecutable() {
+ const dist=path.resolve(__dirname,'../dist');
+ if(process.platform==='win32')return path.join(dist,'win-unpacked','rixu.exe');
+ if(process.platform==='linux')return path.join(dist,'linux-unpacked','rixu');
+ const folder=path.join(dist,process.arch==='arm64'?'mac-arm64':'mac','日序.app','Contents','MacOS');
+ return path.join(folder,fs.readdirSync(folder).find(n=>!n.startsWith('.')));
+}
+const binary=process.argv[2]||findExecutable(),directory=fs.mkdtempSync(path.join(os.tmpdir(),'rixu-package-'));
+const flags=['--remote-debugging-port=0'];if(process.env.RIXU_CI_NO_SANDBOX==='1')flags.push('--no-sandbox');
+const child=spawn(binary,flags,{env:{...process.env,RIXU_DATA_DIR:directory},stdio:['ignore','pipe','pipe']});
+let buffer='',socket,seq=0,finished=false;const pending=new Map();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const exit=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));
+const timeout=setTimeout(()=>{console.error('Packaged app timeout: '+buffer);child.kill();process.exitCode=1;},60000);
+const endpoint=new Promise((resolve,reject)=>{child.stderr.on('data',chunk=>{buffer+=chunk.toString();const m=buffer.match(/DevTools listening on (ws:\/\/\S+)/);if(m)resolve(m[1]);});child.on('error',reject);child.on('exit',(code)=>{if(!finished)reject(Error('Packaged app exited before completion: '+code+' '+buffer));});});
+function rpc(method,params){return new Promise((resolve,reject)=>{const id=++seq;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));});}
+async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
+(async()=>{
+ const url=new URL(await endpoint);let page;
+ for(let i=0;i<100;i++){const pages=await(await fetch(`http://${url.host}/json/list`)).json();page=pages.find(p=>p.type==='page'&&p.url.endsWith('/renderer/index.html'));if(page)break;await sleep(100);}
+ assert.ok(page,'packaged renderer page');socket=new WebSocket(page.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});
+ socket.addEventListener('message',e=>{const data=JSON.parse(e.data),item=pending.get(data.id);if(!item)return;pending.delete(data.id);data.error?item.reject(Error(JSON.stringify(data.error))):item.resolve(data.result);});
+ for(let i=0;i<100;i++){if(await evaluate('!!window.fourfold && document.querySelectorAll(".zone").length===4'))break;await sleep(100);}
+ const initial=await evaluate('window.fourfold.call("state")');assert.equal(initial.tasks.length,0);assert.equal(initial.native.version,'1.0.0');assert.equal(initial.native.autoStartSupported,true);
+ await evaluate('document.querySelector("#new-task").click()');await sleep(150);
+ await evaluate('document.querySelector("#task-title").value="Packaged save / 正式包保存";document.querySelector("#task-form").requestSubmit()');
+ for(let i=0;i<100;i++){if(fs.existsSync(path.join(directory,'tasks.json'))&&JSON.parse(fs.readFileSync(path.join(directory,'tasks.json'),'utf8')).tasks.length===1)break;await sleep(50);}
+ const saved=JSON.parse(fs.readFileSync(path.join(directory,'tasks.json'),'utf8'));assert.equal(saved.tasks[0].title,'Packaged save / 正式包保存');assert.equal(saved.schemaVersion,3);
+ const result={passed:true,platform:process.platform,arch:process.arch,version:initial.native.version,checks:['packaged executable','asar preload and renderer','packaged integrations','UI create','durable schema 3 save','clean exit'],sandbox:!flags.includes('--no-sandbox')};
+ finished=true;evaluate('window.fourfold.call("window:quit")').catch(()=>{});const ended=await exit;assert.equal(ended.code,0);socket.close();clearTimeout(timeout);
+ const artifacts=process.env.RIXU_ARTIFACTS_DIR;if(artifacts){fs.mkdirSync(artifacts,{recursive:true});fs.writeFileSync(path.join(artifacts,'package-test.json'),JSON.stringify(result,null,2));}console.log(JSON.stringify(result));
+})().catch(error=>{console.error(error);clearTimeout(timeout);socket?.close();child.kill();process.exitCode=1;});
