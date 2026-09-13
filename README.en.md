@@ -41,13 +41,13 @@ Get the matching asset from [GitHub Releases](https://github.com/asoming/rixu/re
 
 | Platform | Asset |
 | --- | --- |
-| Debian / Ubuntu x64 | `Rixu-1.0.2-linux-x64.deb` |
-| Other Linux x64 | `Rixu-1.0.2-linux-x64.tar.gz` |
-| Windows x64 | `Rixu-1.0.2-windows-x64-setup.exe` |
-| macOS Apple Silicon | `Rixu-1.0.2-mac-arm64.dmg` or `.zip` |
-| macOS Intel | `Rixu-1.0.2-mac-x64.dmg` or `.zip` |
+| Debian / Ubuntu x64 | `Rixu-1.0.5-linux-x64.deb` |
+| Other Linux x64 | `Rixu-1.0.5-linux-x64.tar.gz` |
+| Windows x64 | `Rixu-1.0.5-windows-x64-setup.exe` |
+| macOS Apple Silicon | `Rixu-1.0.5-mac-arm64.dmg` or `.zip` |
+| macOS Intel | `Rixu-1.0.5-mac-x64.dmg` or `.zip` |
 
-Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.2-linux-x64.deb`.
+Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.5-linux-x64.deb`.
 
 Release notes record actual build, test and signing status. Developer signing certificates are not configured: Windows builds are not Authenticode-signed; macOS builds are ad-hoc signed and not Apple-notarized. Operating-system checks may appear on first launch. Do not disable global operating-system security protections.
 
@@ -60,7 +60,7 @@ Release notes record actual build, test and signing status. Developer signing ce
 
 ## Development
 
-Node.js 22.12+ is required; CI uses Node.js 24.
+Node.js 22.12+ is required; CI uses Node.js 24. Linux source builds also need a C++ compiler, make, Python 3 and libx11-dev; packaged apps do not need build tools.
 
 ```sh
 npm ci
@@ -81,7 +81,7 @@ For upgrades, the existing `四格` directory under the operating system’s app
 
 ## Scope
 
-No accounts, cloud sync, collaboration, natural-language parsing or two-way system-calendar sync. Linux positioning and mouse-through depend on the window manager; Wayland users can try XWayland with `--ozone-platform=x11`. Automated native tests do not replace manual verification of every desktop environment, system permission or notification service.
+No accounts, cloud sync, collaboration, natural-language parsing or two-way system-calendar sync. Linux positioning and mouse-through depend on the window manager; Linux builds select X11/XWayland for the interactive below-app layer. Automated native tests do not replace manual verification of every desktop environment, system permission or notification service.
 
 Report problems in [Issues](https://github.com/asoming/rixu/issues). Source is publicly viewable; no open-source license is currently granted. Copyright remains with the author. Third-party components retain their respective licenses.
 
@@ -97,6 +97,10 @@ Version 1.0.3 removes the entire top caption row; the empty part of the sidebar 
 
 ## 1.0.4 Desktop layer and project folders
 
-The main and mini panels stay below ordinary application windows, including when clicked or focused. Linux/macOS use the native desktop window type; Windows preserves bottom placement before z-order changes are applied. Explicitly opened quick capture and system file pickers remain transient interaction windows.
+The main and mini panels stay below ordinary application windows, including when clicked or focused. Linux uses an interactive layer above desktop icons and below ordinary apps; macOS uses the native desktop type, and Windows preserves bottom placement before z-order changes are applied. Explicitly opened quick capture and system file pickers remain transient interaction windows.
 
 Drop a folder, project directory or `.code-workspace` file into a zone or onto a task. Folder names keep their dots and use a folder icon; click the attachment name to open it in the file manager. The editor includes Add folder, and missing directories can be relinked. Only paths are stored; directories are never recursively scanned, copied or deleted when a task is removed.
+
+## 1.0.5 Click and drop fix
+
+Fixes the Linux desktop icon surface intercepting planner clicks and file drops. The order is desktop/icons < Rixu < ordinary apps. Fully transparent backgrounds remain interactive; fixing the window position does not enable click-through. Linux runs through X11/XWayland.

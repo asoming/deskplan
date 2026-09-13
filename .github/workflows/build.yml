@@ -41,6 +41,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Linux native build headers
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev
       - run: npm ci
       - run: npm test
       - name: Linux desktop dependencies

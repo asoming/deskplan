@@ -26,6 +26,10 @@ Version 1.0.3 removes the entire top caption row; the empty part of the sidebar 
 
 ## 1.0.4 Desktop layer and project folders
 
-The main and mini panels stay below ordinary application windows, including when clicked or focused. Linux/macOS use the native desktop window type; Windows preserves bottom placement before z-order changes are applied. Explicitly opened quick capture and system file pickers remain transient interaction windows.
+The main and mini panels stay below ordinary application windows, including when clicked or focused. Linux uses an interactive layer above desktop icons and below ordinary apps; macOS uses the native desktop type, and Windows preserves bottom placement before z-order changes are applied. Explicitly opened quick capture and system file pickers remain transient interaction windows.
 
 Drop a folder, project directory or `.code-workspace` file into a zone or onto a task. Folder names keep their dots and use a folder icon; click the attachment name to open it in the file manager. The editor includes Add folder, and missing directories can be relinked. Only paths are stored; directories are never recursively scanned, copied or deleted when a task is removed.
+
+## 1.0.5 Click and drop fix
+
+Fixes the Linux desktop icon surface intercepting planner clicks and file drops. The order is desktop/icons < Rixu < ordinary apps. Fully transparent backgrounds remain interactive; fixing the window position does not enable click-through. Linux runs through X11/XWayland.

@@ -41,13 +41,13 @@
 
 | 系统 | 文件 |
 | --- | --- |
-| Debian / Ubuntu，x64 | `Rixu-1.0.2-linux-x64.deb` |
-| 其他 Linux，x64 | `Rixu-1.0.2-linux-x64.tar.gz` |
-| Windows，x64 | `Rixu-1.0.2-windows-x64-setup.exe` |
-| macOS，Apple Silicon | `Rixu-1.0.2-mac-arm64.dmg` 或 `.zip` |
-| macOS，Intel | `Rixu-1.0.2-mac-x64.dmg` 或 `.zip` |
+| Debian / Ubuntu，x64 | `Rixu-1.0.5-linux-x64.deb` |
+| 其他 Linux，x64 | `Rixu-1.0.5-linux-x64.tar.gz` |
+| Windows，x64 | `Rixu-1.0.5-windows-x64-setup.exe` |
+| macOS，Apple Silicon | `Rixu-1.0.5-mac-arm64.dmg` 或 `.zip` |
+| macOS，Intel | `Rixu-1.0.5-mac-x64.dmg` 或 `.zip` |
 
-Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.2-linux-x64.deb`。
+Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.5-linux-x64.deb`。
 
 发行说明会记录实际构建、测试及签名状态。本项目尚未配置开发者代码签名证书：Windows 安装程序未做 Authenticode 签名，macOS 使用临时签名，未进行 Apple 公证。首次打开可能受到系统检查；这与安装包能否构建、应用能否运行是不同的验证项。不要关闭系统的全局安全保护。
 
@@ -62,7 +62,7 @@ Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu �
 
 ## 开发与验证
 
-需要 Node.js 22.12+（CI 使用 24）和 npm。
+需要 Node.js 22.12+（CI 使用 24）和 npm。Linux 源码构建还需 C++ 编译器、make、Python 3 与 libx11-dev；安装包不需要开发工具。
 
 ```sh
 npm ci
@@ -99,6 +99,10 @@ npm run test:package   # 运行刚打包的 App
 
 ## 1.0.4 桌面底层与工作目录
 
-主面板和小窗固定在普通应用窗口下方，点击、聚焦或打开任务不会把面板抬到工作窗口上面。Linux/macOS 使用原生 desktop 窗口层级，Windows 在窗口排序变更应用前保持底层。用户主动打开的随手记和系统文件选择器是临时交互窗口。
+主面板和小窗固定在普通应用窗口下方，点击、聚焦或打开任务不会把面板抬到工作窗口上面。Linux 使用高于桌面图标、低于普通应用的交互层；macOS 使用原生 desktop 类型，Windows 在窗口排序变更应用前保持底层。用户主动打开的随手记和系统文件选择器是临时交互窗口。
 
 支持将文件夹、项目目录或 `.code-workspace` 文件拖入四象限，或拖到已有任务上关联。目录名保留完整名称（包含点号），附件显示文件夹图标；点目录名可在文件管理器打开。编辑器另有「添加文件夹」，移动目录后可重定位。仅保存路径，不递归扫描或复制目录；完成、删除或清空任务不会删除原目录。
+
+## 1.0.5 点击与拖放修复
+
+修复 Linux 下桌面图标窗口挡住日序，造成按钮无法点击、文件落到后方桌面的问题。层级明确为：桌面/图标 < 日序 < 普通应用。背景 100% 透明仍接收操作；固定位置只限制移动，不启用鼠标穿透。Linux 通过 X11/XWayland 运行。

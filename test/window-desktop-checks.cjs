@@ -39,7 +39,8 @@ module.exports=async function checkWindow(runtime,js,call){
  const other=new BrowserWindow({width:300,height:200,show:true});
  try { other.focus();await sleep(150);assert.equal(other.isFocused(),true);runtime.clockCheck();await sleep(100);assert.equal(other.isFocused(),true);assert.equal(win.isAlwaysOnTop(),false); }
  finally { other.destroy(); }
- const covering = new BrowserWindow({width:320,height:240,show:true});
+ const desktop = process.platform==='linux' ? new BrowserWindow({type:'desktop',x:area.x,y:area.y,width:area.width,height:area.height,frame:false,show:true}) : null;
+ const covering = new BrowserWindow({x:area.x,y:area.y,width:320,height:240,show:true});
  try {
   covering.focus();await sleep(150);
   const checkLayer = () => {
@@ -47,8 +48,11 @@ module.exports=async function checkWindow(runtime,js,call){
     const {execFileSync}=require('node:child_process');
     const id=win.getNativeWindowHandle().readUInt32LE(0), otherId=covering.getNativeWindowHandle().readUInt32LE(0);
     const type=execFileSync('xprop',['-id',String(id),'_NET_WM_WINDOW_TYPE'],{encoding:'utf8'});
-    assert.match(type,/_NET_WM_WINDOW_TYPE_DESKTOP/);
+    assert.match(type,/_NET_WM_WINDOW_TYPE_NORMAL/);
+    assert.match(execFileSync('xprop',['-id',String(id),'_NET_WM_STATE'],{encoding:'utf8'}),/_NET_WM_STATE_BELOW/);
     const order=execFileSync('xprop',['-root','_NET_CLIENT_LIST_STACKING'],{encoding:'utf8'}).match(/0x[0-9a-f]+/g).map(n=>parseInt(n,16));
+    const desktopId=desktop.getNativeWindowHandle().readUInt32LE(0);
+    assert.ok(order.includes(desktopId)&&order.indexOf(desktopId)<order.indexOf(id),'panel must be above desktop icons and their input surface');
     assert.ok(order.includes(id)&&order.includes(otherId));assert.ok(order.indexOf(id)<order.indexOf(otherId),'panel must stay below other windows after focus');
    } else if(process.platform==='win32') {
     const layer=require('../src/native/build/Release/window_layer.node');
@@ -57,17 +61,36 @@ module.exports=async function checkWindow(runtime,js,call){
   };
   checkLayer();
   if(process.platform==='linux') {
+   await call('settings',{transparency:100,textTransparency:0});
    const point=await js('(()=>{const r=document.querySelector("#new-task").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()');
    const bounds=win.getBounds();
    require('node:child_process').execFileSync('python3',[require('node:path').join(__dirname,'x11-click-type.py'),String(Math.round(bounds.x+point.x)),String(Math.round(bounds.y+point.y))]);
    await sleep(200);assert.equal(await js('document.querySelector("#task-title").value'),'a','desktop layer receives real click and keyboard input');
    checkLayer();await js('document.querySelector("#task-dialog").close()');
+   const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+   const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'rixu-native-drop-'));
+   try {
+    const project=path.join(fixture,'项目 workspace.v2');fs.mkdirSync(project);
+    const file=path.join(fixture,'原生拖放.txt');fs.writeFileSync(file,'Native file drag fixture');
+    for(const [filePath,kind] of [[file,'file'],[project,'directory']]) {
+     const drop=await js('(()=>{const r=document.querySelectorAll(".zone")[3].getBoundingClientRect();return {x:r.x+r.width/2,y:r.bottom-30}})()');
+     const before=runtime.store.state.tasks.length;
+     await require('node:util').promisify(require('node:child_process').execFile)('python3',[path.join(__dirname,'x11-drop.py'),String(win.getNativeWindowHandle().readUInt32LE(0)),String(Math.round(bounds.x+drop.x)),String(Math.round(bounds.y+drop.y)),filePath]);
+     for(let i=0;i<40 && runtime.store.state.tasks.length===before;i++)await sleep(50);
+     assert.equal(runtime.store.state.tasks.length,before+1,'native file drop creates a task');
+     const added=runtime.store.state.tasks.find(t=>t.files.some(f=>f.path===filePath));
+     assert.equal(added.level,3);assert.equal(added.files[0].kind,kind);
+     checkLayer();await call('undo');assert.equal(runtime.store.state.tasks.length,before);
+     assert.equal(fs.existsSync(filePath),true,'original file or folder is retained');
+    }
+   } finally { fs.rmSync(fixture,{recursive:true,force:true}); }
   }
   win.focus();await sleep(150);checkLayer();
   win.moveTop();await sleep(150);checkLayer();
   await call('window:compact',{enabled:true});win.focus();await sleep(150);checkLayer();
   await call('window:compact',{enabled:false});
- } finally { covering.destroy(); }
+  win.hide();win.show();await sleep(150);checkLayer();
+ } finally { covering.destroy();desktop?.destroy(); }
 
  await call('settings',{language:'zh-CN',desktopInset:0,transparency:65});
 };

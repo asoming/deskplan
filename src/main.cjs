@@ -13,7 +13,11 @@ const { effectiveLevel, pendingReminders, validateSettings } = require('./domain
 // Keep the existing data directory across the product rename.
 app.setPath('userData', path.join(app.getPath('appData'), '四格'));
 app.setName('日序');
-if (process.platform === 'linux') app.setDesktopName('io.rixu.desktop');
+if (process.platform === 'linux') {
+  app.setDesktopName('io.rixu.desktop');
+  // EWMH BELOW provides an interactive layer above desktop icons on X11/XWayland.
+  app.commandLine.appendSwitch('ozone-platform', 'x11');
+}
 if (process.platform === 'win32') app.setAppUserModelId('io.rixu');
 // This panel has no GPU-dependent content. Software rendering also works on remote Linux desktops.
 if (process.platform === 'linux' || (process.platform === 'darwin' && process.arch === 'x64')) app.disableHardwareAcceleration();
@@ -266,10 +270,13 @@ async function start() {
   const bounds = panelBounds(store.state.settings, saved || area, area);
   win = new BrowserWindow({ ...bounds, show: false, frame: false, transparent: true, backgroundColor: '#00000000',
     resizable: false, maximizable: false, fullscreenable: false, hasShadow: true,
-    ...(process.platform === 'win32' ? {} : { type: 'desktop' }),
+    ...(process.platform === 'darwin' ? { type: 'desktop' } : {}),
     title: tr('日序'), icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false, webSecurity: true } });
-  if (process.platform === 'win32') require('./native/build/Release/window_layer.node').attach(win.getNativeWindowHandle());
+  if (process.platform !== 'darwin') {
+    const layer = require('./native/build/Release/window_layer.node');
+    layer.attach(win.getNativeWindowHandle());
+  }
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', event => event.preventDefault());
   win.webContents.on('will-attach-webview', event => event.preventDefault());
