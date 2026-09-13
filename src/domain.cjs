@@ -5,8 +5,8 @@ const LABELS = ['马上做', '尽快做', '按计划做', '先放着'];
 const { HOUR, remainingHours, effectiveLevel, urgency } = require('./renderer/time.js');
 const DEFAULT_SETTINGS = {
   transparency: 35, theme: 'system', alwaysOnTop: false, calendarOpen: false,
-  notifications: false, remindBefore: false, remindAt: true, closeToTray: true,
-  closeExplained: false, autoStart: false, windowSize: 'compact',
+  notifications: false, remindBefore: false, remindAt: true, autoUpdates: true,
+  autoStart: false, windowSize: 'compact',
   textTransparency: 0, view: 'quadrants', compactMode: false, quickCapture: true,
   quickShortcut: 'CommandOrControl+Shift+Space', dailyCapacity: 360,
   desktopBlend: false, quietControls: true, language: 'zh-CN',

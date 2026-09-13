@@ -8,7 +8,7 @@ Switch to Today when it is time to act, placing up to three priorities at the to
 
 Capture a thought with a global shortcut, press Enter, and return to your work. Drop files onto tasks. Break a larger task into checklist steps, repeat routine work, or snooze a reminder without changing the deadline.
 
-Rixu can become a quiet layer on your desktop: subtle borders, independent text and background transparency, controls that fade when idle, a recoverable mouse-through lock, and a mini window containing the current task and the next two. Minimalism should not mean losing access to your controls.
+Rixu can become a quiet layer on your desktop: subtle borders, independent text and background transparency, controls that fade when idle, and a mini window containing the current task and the next two. Minimalism should not mean losing access to your controls.
 
 Your tasks live on your computer. There is no account requirement; the app works offline, keeps backups, and exports JSON or CSV. Version 1.0 focuses on individual desktop planning, without cloud sync or team collaboration.
 
@@ -20,7 +20,7 @@ Rixu starts flush with the top-right corner of the screen work area, with no out
 
 The main panel, mini panel and quick capture never stay on top. Legacy topmost preferences are disabled. Controls live in a narrow left sidebar with translated hover labels; the panel no longer shows a brand logo. The application launcher retains its icon.
 
-Position locking does not pass clicks through. Mouse-through is a separate command. Rixu does not move desktop files and cannot automatically detect every desktop icon across operating systems. Use the right margin, manual position, mouse-through or hide the panel to make room. GUI tests run on an isolated display or in CI; updates do not automatically restart a working user instance.
+Fixed position prevents movement only. The mini rail has just New task and Expand; other controls are in the context menu. GUI tests use isolated displays or CI, and local upgrades follow the user-authorized backup-and-install-first workflow.
 
 Version 1.0.3 removes the entire top caption row; the empty part of the sidebar becomes the unlocked drag area. Flush docking still respects the operating system menu bar and taskbar.
 
@@ -33,3 +33,9 @@ Drop a folder, project directory or `.code-workspace` file into a zone or onto a
 ## 1.0.5 Click and drop fix
 
 Fixes the Linux desktop icon surface intercepting planner clicks and file drops. The order is desktop/icons < Rixu < ordinary apps. Fully transparent backgrounds remain interactive; fixing the window position does not enable click-through. Linux runs through X11/XWayland.
+
+## 1.0.6 Simpler controls and update notices
+
+Removes mouse-through and its shortcut, plus minimize and close buttons. Unlock position and drag empty panel areas or quadrant headings. Mini mode has only New task and Expand; right-click for position, settings and Quit.
+
+Checks stable GitHub releases after startup and every six hours. An update dialog appears when you return to Rixu and no editor dialog is open, once per version. Settings → Software updates supports manual checks, retry and disabling automatic checks. It opens GitHub for release notes and installers; it does not install automatically or upload tasks/files. GitHub's official latest-release link provides a fallback when the public API is rate limited.

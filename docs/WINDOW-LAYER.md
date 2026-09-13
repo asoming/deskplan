@@ -1,6 +1,6 @@
 # Native window layers
 
-The required order is desktop/icons < Rixu < ordinary application windows. Transparency and fixed positioning must not turn off input. Mouse-through remains a separate explicit, reversible command.
+The required order is desktop/icons < Rixu < ordinary application windows. Transparency and fixed positioning must not turn off input. Mouse-through was removed in 1.0.6. Pointer capture and cursor deltas move unlocked panels without OS title-bar drag regions, preserving context menus and file drops.
 
 Linux uses a normal X11 window with `_NET_WM_STATE_BELOW`. The native Node-API module observes only its own window’s MapNotify and PropertyNotify events and requests BELOW whenever Chromium replaces the state during mapping or restore. A libuv watcher integrates X11 events into the main loop without polling timers; it is removed when the window is destroyed. It accepts only this process’s window handle. Electron uses X11 (or XWayland under a Wayland session); native Wayland stacking is not implemented. Build requirements include libx11-dev and a C++ compiler; the packaged runtime needs libX11, already declared by the deb.
 

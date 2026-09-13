@@ -5,6 +5,7 @@ const {panelBounds}=require('../src/window-layout.cjs');
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 module.exports=async function checkWindow(runtime,js,call){
  const win=runtime.window;
+ if(process.env.RIXU_TEST_SCALE) assert.equal(screen.getPrimaryDisplay().scaleFactor,Number(process.env.RIXU_TEST_SCALE));
  const area=screen.getDisplayMatching(win.getBounds()).workArea;
  assert.deepEqual(win.getBounds(),panelBounds(runtime.store.state.settings,win.getBounds(),area));
  assert.equal(win.isAlwaysOnTop(),false);
@@ -21,7 +22,14 @@ module.exports=async function checkWindow(runtime,js,call){
  await js('document.querySelector("#position-toggle").click()');await sleep(100);
  assert.equal(runtime.store.state.settings.positionFixed,false);
  assert.equal(runtime.store.state.settings.windowPosition,'manual');
- assert.equal(await js('getComputedStyle(document.querySelector(".rail-spacer")).webkitAppRegion'),'drag');
+ assert.equal(await js('getComputedStyle(document.querySelector(".rail-spacer")).cursor'),'grab');
+ if(process.platform==='linux') {
+  const drag=async()=>{const point=await js('(()=>{const r=document.querySelector(".zone-heading h2").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()');const b=win.getBounds();
+   await require('node:util').promisify(require('node:child_process').execFile)('python3',[require('node:path').join(__dirname,'x11-drag.py'),String(Math.round(b.x+point.x)),String(Math.round(b.y+point.y)),'-60','55']);await sleep(150);};
+  const before=win.getBounds();await drag();assert.equal(win.getBounds().x,before.x-60);assert.equal(win.getBounds().y,before.y+55);
+  await call('settings',{positionFixed:true});const fixed=win.getBounds();await drag();assert.deepEqual(win.getBounds(),fixed,'fixed position rejects real pointer movement');
+  await call('settings',{positionFixed:false});
+ }
  win.setPosition(area.x+64,area.y+80);await sleep(100);
  await js('document.querySelector("#position-toggle").click()');await sleep(100);
  const manual=win.getBounds();

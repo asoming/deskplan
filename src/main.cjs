@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme, Menu, Tray, nativeImage, Notification, screen, powerMonitor, session, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme, Menu, Tray, nativeImage, Notification, screen, powerMonitor, session, globalShortcut, net } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { tr, setLanguage } = require('./i18n.js');
@@ -24,24 +24,25 @@ if (process.platform === 'linux' || (process.platform === 'darwin' && process.ar
 const dataDirectory = process.env.RIXU_DATA_DIR || process.env.FOURFOLD_DATA_DIR;
 if (dataDirectory) app.setPath('userData', path.resolve(dataDirectory));
 const isTest = process.env.RIXU_TEST === '1' || process.env.FOURFOLD_TEST === '1';
+const { UpdateChecker } = require('./updates.cjs');
+const { latestReleaseURL } = require('./github-latest.cjs');
 const { panelBounds, sameBounds } = require('./window-layout.cjs');
 const indexFile = path.join(__dirname, 'renderer', 'index.html');
-let panelLocked = false, unlockRegistered = false;
-const unlockShortcut = 'CommandOrControl+Shift+L';
+let updater, updateTimer, windowDrag;
 let quickWin, quickRegistered = false, registeredAccelerator = null, normalBounds, fixedBounds;
 let win, tray, store, quitting = false, timer, lastCheck = Date.now(), lastLevels = new Map(), moveTimer;
 
 function viewState() {
   return {
-    ...store.snapshot(), canUndo: store.history.length > 0, recoveryNotice: tr(store.recoveryNotice),
+    ...store.snapshot(), updates: updater?.snapshot(), canUndo: store.history.length > 0, recoveryNotice: tr(store.recoveryNotice),
     native: { platform: process.platform, notificationsSupported: Notification.isSupported(), trayAvailable: !!tray,
-      quickShortcutRegistered: quickRegistered, panelLocked, unlockShortcutRegistered: unlockRegistered, version: require('../package.json').version,
+      quickShortcutRegistered: quickRegistered, version: require('../package.json').version,
       autoStartSupported: process.platform !== 'linux' || app.isPackaged },
   };
 }
 function broadcast() { if (win && !win.isDestroyed()) win.webContents.send('fourfold:state', viewState()); }
 function message(text) { if (win && !win.isDestroyed()) win.webContents.send('fourfold:message', text); }
-function showWindow(taskId) { if (panelLocked) setPanelLocked(false); if (taskId && store.state.settings.compactMode) { store.saveSettings({ compactMode: false }); applySettings(); broadcast(); } if (!win || win.isDestroyed()) return; win.show(); if (win.isMinimized()) win.restore(); win.focus(); if (taskId) win.webContents.send('fourfold:locate', taskId); }
+function showWindow(taskId) { if (taskId && store.state.settings.compactMode) { store.saveSettings({ compactMode: false }); applySettings(); broadcast(); } if (!win || win.isDestroyed()) return; win.show(); if (win.isMinimized()) win.restore(); win.focus(); if (taskId) win.webContents.send('fourfold:locate', taskId); }
 function reportError(error) { console.error(error); message(tr(error.message) || tr('操作未完成，请重试')); }
 function taskFile(taskId, fileId) {
   const task = store.state.tasks.find(t => t.id === taskId), file = task?.files.find(f => f.id === fileId);
@@ -97,10 +98,8 @@ function updateApplicationMenu() {
     { label: tr('日序'), submenu: [
       { role: 'about', label: tr('关于日序') }, { type: 'separator' },
       { role: 'hide', label: tr('隐藏日序') }, { role: 'hideOthers', label: tr('隐藏其他应用') }, { role: 'unhide', label: tr('显示全部') },
-      { type: 'separator' }, { role: 'quit', label: tr('退出日序') },
     ] },
     { label: tr('编辑'), submenu: [['undo','撤销'],['redo','重做'],['cut','剪切'],['copy','复制'],['paste','粘贴'],['selectAll','全选']].map(([role,label]) => ({ role, label: tr(label) })) },
-    { label: tr('窗口'), submenu: [{ role: 'minimize', label: tr('最小化') }, { role: 'zoom', label: tr('缩放') }, { role: 'front', label: tr('前置全部窗口') }] },
   ]));
 }
 function updateTray() {
@@ -109,7 +108,6 @@ function updateTray() {
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: tr('显示日序'), click: () => showWindow() },
     { label: tr('随手记'), click: () => showQuickCapture() },
-    { label: panelLocked ? tr('解锁面板') : tr('锁定并穿透鼠标'), enabled: unlockRegistered || !!tray, click: () => { try { setPanelLocked(!panelLocked); } catch (e) { reportError(e); } } },
     { label: tr('恢复可见'), click: () => { store.saveSettings({ transparency: 35, textTransparency: 0, compactMode: false }); applySettings(); broadcast(); showWindow(); } },
     { label: tr('固定位置'), type: 'checkbox', checked: store.state.settings.positionFixed, click: item => { try { store.saveSettings({ positionFixed: item.checked, windowPosition: 'manual' }); applySettings(); broadcast(); } catch (e) { reportError(e); } } },
     { type: 'separator' }, { label: tr('退出日序'), click: () => { quitting = true; app.quit(); } },
@@ -124,6 +122,7 @@ function createTray() {
   } catch (error) { console.warn('Tray unavailable:', error.message); tray = null; }
 }
 function clockCheck() {
+  if (!isTest && store.state.settings.autoUpdates && updater.due()) updater.check();
   const now = Date.now();
   try {
     const moved = store.state.tasks.filter(t => t.status === 'active' && t.level === 1 && effectiveLevel(t, now) === 0 && lastLevels.get(t.id) === 1);
@@ -146,12 +145,26 @@ function clockCheck() {
   } catch (e) { reportError(e); }
 }
 
-function setPanelLocked(locked) {
-  if (locked && !unlockRegistered && !tray) throw new Error(tr('没有可用的解锁入口；请先启用托盘或释放 Ctrl/⌘ + Shift + L'));
-  panelLocked = locked;
-  win.setIgnoreMouseEvents(locked, { forward: true });
-  if (locked) win.blur();
-  broadcast(); updateTray();
+function panelMenu() {
+  return Menu.buildFromTemplate([
+    { id: 'position', label: tr(store.state.settings.positionFixed ? '解锁位置' : '固定位置'), click: () => {
+      windowDrag = null;
+      store.saveSettings({ positionFixed: !store.state.settings.positionFixed, windowPosition: 'manual' }); applySettings(); broadcast();
+    } },
+    { id: 'compact', label: tr(store.state.settings.compactMode ? '展开完整计划' : '缩为小窗'), click: () => win.webContents.send('fourfold:command', 'compact') },
+    { id: 'settings', label: tr('设置与备份'), click: () => win.webContents.send('fourfold:command', 'settings') },
+    { type: 'separator' },
+    { id: 'quit', label: tr('退出日序'), click: () => { quitting = true; app.quit(); } },
+  ]);
+}
+function moveWindow(phase) {
+  if (phase === 'end' || store.state.settings.positionFixed) { windowDrag = null; return; }
+  const cursor = screen.getCursorScreenPoint();
+  if (phase === 'start') { windowDrag = { bounds: win.getBounds(), cursor }; return; }
+  if (!windowDrag || phase !== 'move') return;
+  const { bounds, cursor: origin } = windowDrag;
+  const next = clampBounds({ ...bounds, x: bounds.x + cursor.x - origin.x, y: bounds.y + cursor.y - origin.y });
+  win.setBounds(next);
 }
 function registerQuickShortcut() {
   const accelerator = store.state.settings.quickCapture ? store.state.settings.quickShortcut : null;
@@ -187,7 +200,10 @@ function registerIPC() {
     plan: async ({ id, ...options }) => { store.plan(id, options); broadcast(); },
     current: async ({ id }) => { store.startCurrent(id); broadcast(); },
     review: async ({ id, choice, due }) => { store.review(id, choice, due); broadcast(); },
-    'window:lock': async ({ locked }) => setPanelLocked(!!locked),
+    'window:move': async ({ phase }) => moveWindow(phase),
+    'updates:check': async () => updater.check(),
+    'updates:acknowledge': async ({ version }) => updater.acknowledge(version),
+    'updates:open': async () => { if (updater.state.release) await shell.openExternal(updater.state.release.url); },
     'window:compact': async ({ enabled }) => setCompact(!!enabled),
     'quick:show': async () => showQuickCapture(),
     'quick:hide': async () => quickWin?.hide(),
@@ -245,8 +261,6 @@ function registerIPC() {
       store.restore(result.filePaths[0]); applySettings(); broadcast(); return true;
     },
     'backup:folder': async () => { const error = await shell.openPath(store.backupDirectory); if (error) throw new Error(error); },
-    'window:minimize': async () => win.minimize(),
-    'window:close': async () => win.close(),
     'window:quit': async () => { quitting = true; app.quit(); },
   };
   for (const [name, handler] of Object.entries(handlers)) ipcMain.handle(`fourfold:${name}`, async (event, payload) => {
@@ -257,11 +271,12 @@ function registerIPC() {
   });
 }
 
-async function start() {
+async function start(options = {}) {
   if (!isTest && !app.requestSingleInstanceLock()) { app.quit(); return; }
   app.on('second-instance', () => showWindow());
   await app.whenReady();
   store = new Store(app.getPath('userData'));
+  updater = new UpdateChecker({ version: require('../package.json').version, fetch: isTest && options.updateFetch ? options.updateFetch : (...args) => net.fetch(...args), latestURL: () => latestReleaseURL(net), cacheFile: path.join(app.getPath('userData'), 'updates.json'), onChange: broadcast });
   setLanguage(store.state.settings.language);
   nativeTheme.themeSource = store.state.settings.theme;
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
@@ -269,7 +284,7 @@ async function start() {
   const area = (saved ? screen.getDisplayMatching(saved) : screen.getPrimaryDisplay()).workArea;
   const bounds = panelBounds(store.state.settings, saved || area, area);
   win = new BrowserWindow({ ...bounds, show: false, frame: false, transparent: true, backgroundColor: '#00000000',
-    resizable: false, maximizable: false, fullscreenable: false, hasShadow: true,
+    resizable: false, maximizable: false, minimizable: false, fullscreenable: false, hasShadow: true,
     ...(process.platform === 'darwin' ? { type: 'desktop' } : {}),
     title: tr('日序'), icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false, webSecurity: true } });
@@ -282,8 +297,17 @@ async function start() {
   win.webContents.on('will-attach-webview', event => event.preventDefault());
   if (process.platform === 'win32') win.setAlwaysOnTop(false);
   Menu.setApplicationMenu(null);
-  unlockRegistered = globalShortcut.register(unlockShortcut, () => { try { setPanelLocked(!panelLocked); if (!panelLocked) showWindow(); } catch (e) { reportError(e); } });
   createTray(); registerIPC(); registerQuickShortcut(); applySettings();
+  win.webContents.on('context-menu', (_event, params) => {
+    const menu = panelMenu();
+    if (params.isEditable) {
+      menu.insert(0, new (require('electron').MenuItem)({ type: 'separator' }));
+      for (const role of ['paste', 'copy', 'cut']) menu.insert(0, new (require('electron').MenuItem)({ role }));
+    }
+    menu.popup({ window: win });
+  });
+  win.on('minimize', () => { if (!quitting) win.restore(); });
+  win.on('blur', () => { windowDrag = null; });
   win.on('will-move', event => { if (store.state.settings.positionFixed) event.preventDefault(); });
   win.on('move', () => {
     if (store.state.settings.positionFixed && fixedBounds && !sameBounds(win.getBounds(), fixedBounds)) {
@@ -296,18 +320,7 @@ async function start() {
       }
     }, 500);
   });
-  win.on('close', async event => {
-    if (quitting || isTest) return;
-    if (store.state.settings.closeToTray && tray) {
-      event.preventDefault();
-      if (!store.state.settings.closeExplained) {
-        const result = await dialog.showMessageBox(win, { type: 'info', message: tr('关闭后，日序会留在后台'), detail: tr('通过系统托盘/菜单栏可重新打开，截止提醒仍会运行。完全退出后停止提醒。'), buttons: [tr('留在后台'), tr('退出应用')], defaultId: 0, cancelId: 0 });
-        if (result.response === 1) { quitting = true; app.quit(); return; }
-        try { store.saveSettings({ closeExplained: true }); } catch (e) { reportError(e); }
-      }
-      win.hide();
-    } else { quitting = true; app.quit(); }
-  });
+  win.on('close', event => { if (!quitting) event.preventDefault(); });
   screen.on('display-removed', positionWindow);
   screen.on('display-metrics-changed', positionWindow);
   powerMonitor.on('resume', clockCheck);
@@ -315,12 +328,13 @@ async function start() {
   timer = setInterval(clockCheck, 60_000);
   await win.loadFile(indexFile);
   if (!isTest && (!process.argv.includes('--hidden') || !tray)) win.show();
-  return { window: win, store, clockCheck, viewState, showQuickCapture, setPanelLocked, getQuickWindow: () => quickWin };
+  if (!isTest) updateTimer = setTimeout(() => { if (store.state.settings.autoUpdates) updater.check(); }, 20000);
+  return { window: win, store, clockCheck, viewState, showQuickCapture, updater, panelMenu, getQuickWindow: () => quickWin };
 }
 
 app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('before-quit', () => {
-  quitting = true; clearTimeout(moveTimer); clearInterval(timer);
+  quitting = true; clearTimeout(moveTimer); clearTimeout(updateTimer); clearInterval(timer);
   if (store && win && !win.isDestroyed() && !store.state.settings.compactMode) { try { store.saveBounds(win.getBounds()); } catch (e) { console.error('Window position was not saved:', e.message); } }
 });
 app.on('activate', () => showWindow());

@@ -1,6 +1,24 @@
 (function (root) {
   'use strict';
   const english = {
+  "软件更新": "Software updates",
+  "自动检查 GitHub 更新": "Check GitHub automatically",
+  "发现正式新版时提示，不自动安装": "Notify about stable releases; do not install automatically",
+  "检测更新": "Check for updates",
+  "前往 GitHub 下载": "Download on GitHub",
+  "发现新版本": "Update available",
+  "暂不更新": "Not now",
+  "更新不会自动安装。可前往 GitHub 查看更新说明并下载安装包。": "Updates are not installed automatically. Visit GitHub for release notes and installers.",
+  "正在连接 GitHub…": "Connecting to GitHub\u2026",
+  "当前已是最新正式版": "You have the latest stable version",
+  "仅检查日序的 GitHub 正式版本": "Checks stable Rixu releases on GitHub only",
+  "更新信息无效，请稍后重试": "Invalid release information. Please try again later.",
+  "检测过于频繁，请稍后重试": "Too many requests. Please try again later.",
+  "无法连接 GitHub，请检查网络后重试": "Could not reach GitHub. Check your connection and try again.",
+  "解除固定后，拖动面板空白处或象限标题移动。右键菜单可固定位置、打开设置或退出。": "Unlock position, then drag empty panel areas or quadrant headings. Right-click to fix position, open settings or quit.",
+  "发现新版本 {0}": "New version {0} available",
+  "当前 {0} → 新版 {1}": "Current {0} \u2192 New {1}",
+
   "一次请选择 1–100 个文件或文件夹": "Select 1\u2013100 files or folders",
   "请选择电脑上的文件或文件夹": "Choose files or folders on this computer",
   "仅支持普通文件和文件夹": "Only regular files and folders are supported",

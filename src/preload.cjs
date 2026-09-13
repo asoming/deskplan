@@ -1,6 +1,6 @@
 'use strict';
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
-const allowed = new Set(['window:lock', 'export:csv', 'plan', 'current', 'review', 'window:compact', 'quick:show', 'quick:hide', 'quick:create', 'quick:preferences', 'state', 'create', 'update', 'status', 'undo', 'purge', 'settings', 'files:select', 'files:pick', 'files:remove', 'files:relink', 'files:check', 'files:open', 'backup:export', 'backup:restore', 'backup:folder', 'window:minimize', 'window:close', 'window:quit']);
+const allowed = new Set(['window:move', 'updates:check', 'updates:acknowledge', 'updates:open', 'export:csv', 'plan', 'current', 'review', 'window:compact', 'quick:show', 'quick:hide', 'quick:create', 'quick:preferences', 'state', 'create', 'update', 'status', 'undo', 'purge', 'settings', 'files:select', 'files:pick', 'files:remove', 'files:relink', 'files:check', 'files:open', 'backup:export', 'backup:restore', 'backup:folder', 'window:quit']);
 async function invoke(name, payload) {
   const result = await ipcRenderer.invoke(`fourfold:${name}`, payload);
   if (!result.ok) throw new Error(result.error);
@@ -14,6 +14,7 @@ function subscribe(channel, callback) {
 contextBridge.exposeInMainWorld('fourfold', {
   call: (name, payload) => { if (!allowed.has(name)) return Promise.reject(new Error('不支持此操作')); return invoke(name, payload); },
   dropFiles: (files, target) => invoke('files:drop', { paths: Array.from(files, file => webUtils.getPathForFile(file)), taskId: target.taskId, level: target.level }),
+  onCommand: callback => subscribe('fourfold:command', callback),
   onLanguage: callback => subscribe('fourfold:language', callback),
   onQuickFocus: callback => subscribe('fourfold:quick-focus', callback),
   onReview: callback => subscribe('fourfold:review', callback),

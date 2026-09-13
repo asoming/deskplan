@@ -49,9 +49,7 @@
     now = Date.now(); document.documentElement.dataset.theme = state.settings.theme;
     document.body.classList.toggle('desktop-blend', state.settings.desktopBlend);
     document.body.classList.toggle('quiet-controls', state.settings.quietControls);
-    document.body.classList.toggle('panel-locked', state.native.panelLocked);
     $('#blend-toggle').setAttribute('aria-pressed', String(state.settings.desktopBlend));
-    $('#lock-panel').textContent = state.native.panelLocked ? tr('解锁面板') : tr('锁定并穿透鼠标');
     setTransparency(state.settings.transparency); setTextTransparency(state.settings.textTransparency);
     $('#calendar').hidden = !state.settings.calendarOpen;
     $('#workspace').classList.toggle('with-calendar', state.settings.calendarOpen);
@@ -62,12 +60,13 @@
     $('#position-toggle').setAttribute('aria-pressed', String(state.settings.positionFixed));
     $('#position-toggle').setAttribute('aria-label', state.settings.positionFixed ? tr('解锁位置') : tr('固定位置'));
     $('#position-toggle').title = $('#position-toggle').getAttribute('aria-label');
-    $('#app').setAttribute('aria-label', state.native.panelLocked ? tr('鼠标穿透中') : tr('日序'));
+    $('#app').setAttribute('aria-label', tr('日序'));
     document.body.classList.toggle('edge-docked', state.settings.windowPosition === 'top-right' && state.settings.desktopInset === 0);
     renderBoard(); renderCalendar(); renderPlanner();
     if ($('#library-dialog').open) renderLibrary();
     if ($('#settings-dialog').open) renderSettings();
     if ($('#task-dialog').open) renderAttachments();
+    renderUpdateStatus(); tryShowUpdate();
   }
   function renderBoard() {
     if (!state) return;
@@ -267,8 +266,32 @@
     $('#autostart-hint').textContent = state.native.autoStartSupported ? '' : tr('打包后的桌面版可用');
     $('[data-setting="notifications"]').disabled = !state.native.notificationsSupported;
     document.querySelector('.about').textContent = tr`日序 ${state.native.version || '1.0.1'} · 本地优先`;
+    renderUpdateStatus();
     $('#notification-hint').textContent = state.native.notificationsSupported ? tr('完全退出应用后不再提醒') : tr('当前系统无法发送原生通知');
   }
+  function renderUpdateStatus() {
+    const update = state?.updates;
+    if (!update) return;
+    $('#check-updates').disabled = update.status === 'checking';
+    $('#settings-download-update').hidden = update.status !== 'available';
+    $('#update-status').textContent = update.status === 'checking' ? tr('正在连接 GitHub…') : update.status === 'available' ? tr`发现新版本 ${update.release.version}` : update.status === 'current' ? tr('当前已是最新正式版') : update.status === 'error' ? tr(update.error) : tr('仅检查日序的 GitHub 正式版本');
+    if ($('#update-dialog').open && update.release) $('#update-versions').textContent = tr`当前 ${state.native.version} → 新版 ${update.release.version}`;
+  }
+  function tryShowUpdate(manual = false) {
+    const update = state?.updates;
+    if (update?.status !== 'available' || $('#update-dialog').open) return;
+    if (!manual && (!state.settings.autoUpdates || update.notifiedVersion === update.release.version || !document.hasFocus() || movingPointer !== null || document.querySelector('dialog[open]'))) return;
+    $('#update-versions').textContent = tr`当前 ${state.native.version} → 新版 ${update.release.version}`;
+    state = { ...state, updates: { ...update, notifiedVersion: update.release.version } };
+    $('#update-dialog').showModal();
+    call('updates:acknowledge', { version: update.release.version }).catch(error);
+  }
+  $('#check-updates').onclick = action(async () => { const updates = await call('updates:check'); state = { ...state, updates }; renderUpdateStatus(); tryShowUpdate(true); });
+  $('#download-update').onclick = $('#settings-download-update').onclick = action(() => call('updates:open'));
+  $('#dismiss-update').onclick = () => $('#update-dialog').close();
+  window.addEventListener('focus', () => tryShowUpdate());
+  document.addEventListener('close', () => tryShowUpdate(), true);
+
   async function reschedule(id, targetDay) {
     const t = state.tasks.find(t => t.id === id); if (!t) return;
     const target = t.due ? new Date(t.due) : new Date(`${targetDay}T18:00`);
@@ -291,14 +314,10 @@
   $('#text-transparency').onchange = action(e => call('settings', { textTransparency: Number(e.target.value) }));
   $('#compact-toggle').onclick = action(async () => { if (await closeEditor()) await call('window:compact', { enabled: !state.settings.compactMode }); });
   $('#blend-toggle').onclick = action(() => call('settings', { desktopBlend: !state.settings.desktopBlend, ...(state.settings.desktopBlend ? {} : { transparency: Math.max(state.settings.transparency, 65) }) }));
-  $('#lock-panel').onclick = action(() => { closePopovers(); return call('window:lock', { locked: !state.native.panelLocked }); });
   $('#export-csv').onclick = action(async () => { if (await call('export:csv')) toast(tr('已导出 CSV 表格')); });
   $('#quick-open').onclick = action(() => call('quick:show'));
   $('#task-planned').oninput = () => { if ($('#task-planned').value) $('#task-inbox').checked = false; };
   $('#task-inbox').onchange = () => { if ($('#task-inbox').checked) $('#task-planned').value = ''; };
-  $('#minimize').onclick = action(() => call('window:minimize'));
-  $('#close-window').onclick = action(() => call('window:close'));
-  $('#quit').onclick = action(() => call('window:quit'));
   $('#position-toggle').onclick = action(() => call('settings', { positionFixed: !state.settings.positionFixed, windowPosition: 'manual' }));
   $('#dock-right').onclick = action(() => call('settings', { windowPosition: 'top-right', positionFixed: true, desktopInset: 0 }));
   $('#settings-button').onclick = () => { closePopovers(); renderSettings(); $('#settings-dialog').showModal(); };
@@ -371,6 +390,30 @@
     }
   });
   document.addEventListener('drop', event => { event.preventDefault(); handleDrop(event); });
+  // Pointer capture keeps movement independent of OS title-bar hit testing.
+  // It leaves buttons, task dragging, editable fields and native file drops alone.
+  let movingPointer = null, moveFrame = 0;
+  document.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || state?.settings.positionFixed || document.querySelector('dialog[open]')) return;
+    if (event.target.closest('button,input,textarea,select,a,label,[data-task],.compact-task,.popover,dialog')) return;
+    if (!event.target.closest('.tool-rail,.zone,.workspace,#compact-panel,.statusbar')) return;
+    event.preventDefault(); movingPointer = event.pointerId;
+    $('#app').setPointerCapture(event.pointerId); document.body.classList.add('window-moving');
+    call('window:move', { phase: 'start' }).catch(error);
+  });
+  document.addEventListener('pointermove', event => {
+    if (event.pointerId !== movingPointer || moveFrame) return;
+    moveFrame = requestAnimationFrame(() => { moveFrame = 0; call('window:move', { phase: 'move' }).catch(error); });
+  });
+  function endWindowMove(event) {
+    if (movingPointer === null || event?.pointerId !== undefined && event.pointerId !== movingPointer) return;
+    cancelAnimationFrame(moveFrame); moveFrame = 0;
+    if ($('#app').hasPointerCapture(movingPointer)) $('#app').releasePointerCapture(movingPointer);
+    movingPointer = null; document.body.classList.remove('window-moving'); call('window:move', { phase: 'end' }).catch(error); tryShowUpdate();
+  }
+  document.addEventListener('pointerup', endWindowMove);
+  document.addEventListener('pointercancel', endWindowMove);
+  window.addEventListener('blur', () => endWindowMove());
   document.addEventListener('pointerdown', () => document.body.classList.remove('keyboard-navigation'));
   document.addEventListener('keydown', action(async event => {
     if (event.key === 'Tab') document.body.classList.add('keyboard-navigation');
@@ -383,6 +426,7 @@
   }));
 
   if (!api) { $('#task-count').textContent = tr('请通过桌面应用启动日序'); return; }
+  api.onCommand(command => { if (command === 'settings') $('#settings-button').click(); if (command === 'compact') $('#compact-toggle').click(); });
   api.onState(receive);
   api.onMessage(text => toast(text));
   api.onTick(value => { now = value; renderBoard(); renderCalendar(); renderPlanner(); });

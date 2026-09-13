@@ -13,7 +13,12 @@ const child=spawn(binary,flags,{env:{...process.env,RIXU_DATA_DIR:directory},std
 let buffer='',socket,seq=0,finished=false;const pending=new Map();
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const exit=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));
-const timeout=setTimeout(()=>{console.error('Packaged app timeout: '+buffer);child.kill();process.exitCode=1;},60000);
+function failStop(error) {
+ console.error(error); clearTimeout(timeout); socket?.close(); child.kill(); process.exitCode=1;
+ // Only terminate the test's own child if graceful shutdown is stuck.
+ setTimeout(()=>{ if(child.exitCode===null)child.kill('SIGKILL');process.exit(1); },2000).unref();
+}
+const timeout=setTimeout(()=>failStop('Packaged app timeout: '+buffer),60000);
 const endpoint=new Promise((resolve,reject)=>{child.stderr.on('data',chunk=>{buffer+=chunk.toString();const m=buffer.match(/DevTools listening on (ws:\/\/\S+)/);if(m)resolve(m[1]);});child.on('error',reject);child.on('exit',(code)=>{if(!finished)reject(Error('Packaged app exited before completion: '+code+' '+buffer));});});
 function rpc(method,params){return new Promise((resolve,reject)=>{const id=++seq;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));});}
 async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
@@ -40,4 +45,4 @@ async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expres
  execFileSync(process.execPath,[__filename,binary],{env:{...process.env,RIXU_SMOKE_REOPEN_DIR:directory},stdio:'inherit',timeout:90000});
  result.checks.push('English switch through settings','language and tasks retained after full process restart');
  const artifacts=process.env.RIXU_ARTIFACTS_DIR;if(artifacts){fs.mkdirSync(artifacts,{recursive:true});fs.writeFileSync(path.join(artifacts,process.argv[2] ? 'installed-package-test.json' : 'package-test.json'),JSON.stringify(result,null,2));}console.log(JSON.stringify(result));
-})().catch(error=>{console.error(error);clearTimeout(timeout);socket?.close();child.kill();process.exitCode=1;});
+})().catch(failStop);

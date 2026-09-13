@@ -3,6 +3,7 @@ import ctypes as c
 import ctypes.util
 from pathlib import Path
 import sys
+import os
 import time
 
 x = c.CDLL(ctypes.util.find_library('X11'))
@@ -16,6 +17,7 @@ root = api(x, 'XDefaultRootWindow', [D], W)(display)
 intern = api(x, 'XInternAtom', [D, c.c_char_p, c.c_int], A)
 def atom(name): return intern(display, name.encode(), 0)
 target, px, py = map(int, sys.argv[1:4])
+scale = float(os.environ.get('RIXU_TEST_SCALE','1')); px = round(px*scale); py = round(py*scale)
 payload = (Path(sys.argv[4]).resolve().as_uri() + '\r\n').encode()
 api(t, 'XTestFakeMotionEvent', [D, c.c_int, c.c_int, c.c_int, W])(display, -1, px, py, 0)
 sync = api(x, 'XSync', [D, c.c_int]); sync(display, 0)
