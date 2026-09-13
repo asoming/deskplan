@@ -16,7 +16,7 @@ Build workflows cover Windows, Linux, Apple Silicon Macs and Intel Macs. See the
 
 ## Top-right docking and a fixed position (1.0.2)
 
-Rixu starts at the top right of the screen work area with a 24 px margin; fresh installs use 760 × 540. Position is fixed by default while task editing and file drops remain available. Use the pin in the left sidebar to unlock, drag the top strip, then fix the position again. The diagonal arrow docks it at the top right. Settings can reserve an additional 0–480 px on the right. Mini mode keeps the same corner; manual placement is restored when expanded. Monitor changes keep the window in the available work area.
+Rixu starts at the top right of the screen work area with a 24 px margin plus 120 px reserved on the right for a column of desktop files; fresh installs use 760 × 540. Position is fixed by default while task editing and file drops remain available. Use the pin in the left sidebar to unlock, drag the top strip, then fix the position again. The diagonal arrow docks it at the top right. Settings can reserve an additional 0–480 px on the right. Mini mode keeps the same corner; manual placement is restored when expanded. Monitor changes keep the window in the available work area.
 
 The main panel, mini panel and quick capture never stay on top. Legacy topmost preferences are disabled. Controls live in a narrow left sidebar with translated hover labels; the panel no longer shows a brand logo. The application launcher retains its icon.
 

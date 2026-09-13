@@ -24,7 +24,7 @@ module.exports=async function checkWindow(runtime,js,call){
  assert.equal(await js('document.querySelector("#position-toggle").title'),'Unlock position');
  await call('window:compact',{enabled:true});assert.equal(win.isAlwaysOnTop(),false);
  await call('window:compact',{enabled:false});assert.deepEqual(win.getBounds(),manual);
- await call('settings',{desktopInset:96});
+ await call('settings',{desktopInset:216});
  await js('document.querySelector("#dock-right").click()');await sleep(100);
  assert.equal(runtime.store.state.settings.positionFixed,true);assert.equal(win.getBounds().x,initial.x-96);
  await call('settings',{alwaysOnTop:true});assert.equal(win.isAlwaysOnTop(),false);
@@ -32,5 +32,5 @@ module.exports=async function checkWindow(runtime,js,call){
  const other=new BrowserWindow({width:300,height:200,show:true});
  try { other.focus();await sleep(150);assert.equal(other.isFocused(),true);runtime.clockCheck();await sleep(100);assert.equal(other.isFocused(),true);assert.equal(win.isAlwaysOnTop(),false); }
  finally { other.destroy(); }
- await call('settings',{language:'zh-CN',desktopInset:0,transparency:65});
+ await call('settings',{language:'zh-CN',desktopInset:120,transparency:65});
 };

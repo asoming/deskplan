@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS = {
   textTransparency: 0, view: 'quadrants', compactMode: false, quickCapture: true,
   quickShortcut: 'CommandOrControl+Shift+Space', dailyCapacity: 360,
   desktopBlend: false, quietControls: true, language: 'zh-CN',
-  positionFixed: true, windowPosition: 'top-right', desktopInset: 0,
+  positionFixed: true, windowPosition: 'top-right', desktopInset: 120,
 };
 
 function invariant(condition, message) { if (!condition) throw new Error(message); }
