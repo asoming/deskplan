@@ -45,7 +45,7 @@ jobs:
       - run: npm test
       - name: Linux desktop dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y xvfb openbox libgtk-3-0 libnss3 libgbm1 libasound2t64 fonts-noto-cjk
+        run: sudo apt-get update && sudo apt-get install -y xvfb openbox x11-utils libgtk-3-0 libnss3 libgbm1 libasound2t64 fonts-noto-cjk
       - name: Configure development sandbox helper
         if: runner.os == 'Linux'
         run: |

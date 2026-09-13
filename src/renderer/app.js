@@ -75,7 +75,7 @@
     const active = state.tasks.filter(t => t.status === 'active' && !t.inbox);
     $('#board').innerHTML = labels.map((label, level) => {
       const list = active.filter(t => effectiveLevel(t, now) === level).sort((a, b) => (remainingHours(a, now) - remainingHours(b, now)) || a.createdAt.localeCompare(b.createdAt));
-      return html`<section class="zone" data-level="${level}" aria-label="${label}"><div class="zone-heading"><h2>${label}<span class="count">${list.length}</span></h2><button data-add="${level}" aria-label="在${label}添加任务">${icon('plus')}</button></div><div class="task-list">${list.map(taskHTML).join('') || html('<div class="empty-zone">拖入文件，或点 ＋ 添加</div>')}</div></section>`;
+      return html`<section class="zone" data-level="${level}" aria-label="${label}"><div class="zone-heading"><h2>${label}<span class="count">${list.length}</span></h2><button data-add="${level}" aria-label="在${label}添加任务">${icon('plus')}</button></div><div class="task-list">${list.map(taskHTML).join('') || html('<div class="empty-zone">拖入文件或文件夹，或点 ＋ 添加</div>')}</div></section>`;
     }).join('');
     document.querySelectorAll('.task-list').forEach((list, i) => { list.scrollTop = scroll[i] || 0; });
     $('#task-count').textContent = tr`${active.length} 件待办`;
@@ -247,8 +247,8 @@
     $('#attachment-count').textContent = files.length ? String(files.length) : '';
     $('#attachments').innerHTML = files.length ? files.map((file, index) => {
       const missing = availability.get(file.id) === false;
-      return html`<div class="attachment ${missing ? 'missing' : ''}"><button type="button" class="attachment-name" data-file-open="${esc(file.id || '')}" title="${esc(file.path)}" ${!editingId ? 'disabled' : ''}>${icon('file')}<span>${esc(file.name)}${missing ? tr(' · 文件不可用') : ''}</span></button><div class="attachment-actions">${editingId ? html`<button type="button" data-relink="${esc(file.id)}" aria-label="重新定位 ${esc(file.name)}">重定位</button><button type="button" data-folder="${esc(file.id)}" aria-label="打开 ${esc(file.name)} 所在文件夹">${icon('folder')}</button>` : ''}<button type="button" data-file-remove="${esc(file.id || index)}" aria-label="移除 ${esc(file.name)} 的关联">${icon('close')}</button></div></div>`;
-    }).join('') : html('<div class="empty-attachments">添加文件后，可以在这里直接打开原文件。</div>');
+      return html`<div class="attachment ${missing ? 'missing' : ''}"><button type="button" class="attachment-name" data-file-open="${esc(file.id || '')}" title="${esc(file.path)}" ${!editingId ? 'disabled' : ''}>${icon(file.kind === 'directory' ? 'folder' : 'file')}<span>${esc(file.name)}${missing ? tr(' · 文件不可用') : ''}</span></button><div class="attachment-actions">${editingId ? html`<button type="button" data-relink="${esc(file.id)}" aria-label="重新定位 ${esc(file.name)}">重定位</button><button type="button" data-folder="${esc(file.id)}" aria-label="打开 ${esc(file.name)} 所在文件夹">${icon('folder')}</button>` : ''}<button type="button" data-file-remove="${esc(file.id || index)}" aria-label="移除 ${esc(file.name)} 的关联">${icon('close')}</button></div></div>`;
+    }).join('') : html('<div class="empty-attachments">添加文件或文件夹后，可以在这里直接打开。</div>');
   }
   function openLibrary(filter = 'all') {
     closePopovers(); $('#library-filter').value = filter; $('#search-input').value = '';
@@ -313,10 +313,12 @@
   $('#task-dialog').oncancel = event => { event.preventDefault(); closeEditor().catch(error); };
   $('#delete-task').onclick = action(async () => { await call('status', { id: editingId, action: 'delete' }); $('#task-dialog').close(); editingId = null; toast(tr('已移到回收站，原文件保持不变'), true); });
   $('#complete-task').onclick = action(async () => { const id = editingId; if (editorSignature() !== editorInitial && !await saveEditor()) return; await call('status', { id, action: 'complete' }); $('#task-dialog').close(); editingId = null; toast(tr('已完成'), true); });
-  $('#attach-files').onclick = action(async () => {
-    if (editingId) { await call('files:pick', { taskId: editingId }); }
-    else { const files = await call('files:select'); const known = new Set(draftFiles.map(f => f.path)); draftFiles.push(...files.filter(f => !known.has(f.path))); renderAttachments(); }
+  const attachSelection = directory => action(async () => {
+    if (editingId) { await call('files:pick', { taskId: editingId, directory }); }
+    else { const files = await call('files:select', { directory }); const known = new Set(draftFiles.map(f => f.path)); draftFiles.push(...files.filter(f => !known.has(f.path))); renderAttachments(); }
   });
+  $('#attach-files').onclick = attachSelection(false);
+  $('#attach-folder').onclick = attachSelection(true);
   $('#search-input').oninput = renderLibrary; $('#library-filter').onchange = renderLibrary;
   $('#settings-dialog').onchange = action(async event => { const input = event.target.closest('[data-setting]'); if (!input) return; try { await call('settings', { [input.dataset.setting]: input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : input.value }); } catch (e) { renderSettings(); throw e; } });
 

@@ -9,3 +9,5 @@ test-artifacts/
 *.p12
 *.pfx
 .env*
+
+src/native/build/

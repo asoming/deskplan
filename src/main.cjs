@@ -7,6 +7,7 @@ const { tr, setLanguage } = require('./i18n.js');
 const { isTrustedFileURL } = require('./trusted-file.cjs');
 const { Store, atomicWrite } = require('./store.cjs');
 const { exportCSV } = require('./export.cjs');
+const { inspectPaths, inspectAttachment } = require('./attachments.cjs');
 const { effectiveLevel, pendingReminders, validateSettings } = require('./domain.cjs');
 
 // Keep the existing data directory across the product rename.
@@ -42,17 +43,8 @@ function taskFile(taskId, fileId) {
   const task = store.state.tasks.find(t => t.id === taskId), file = task?.files.find(f => f.id === fileId);
   if (!file) throw new Error(tr('文件关联不存在')); return file;
 }
-function inspectPaths(paths) {
-  if (!Array.isArray(paths) || !paths.length || paths.length > 100) throw new Error(tr('一次请选择 1–100 个文件'));
-  return paths.map(p => {
-    if (typeof p !== 'string' || !path.isAbsolute(p)) throw new Error(tr('请选择电脑上的文件'));
-    const normalized = path.normalize(p), stats = fs.statSync(normalized);
-    if (!stats.isFile()) throw new Error(tr('当前支持拖入文件，暂不支持文件夹'));
-    return { path: normalized, name: path.basename(normalized) };
-  });
-}
-async function pickFiles(multiple = true) {
-  const result = await dialog.showOpenDialog(win, { title: tr('关联任务文件'), buttonLabel: tr('选择'), properties: ['openFile', ...(multiple ? ['multiSelections'] : [])] });
+async function pickFiles(multiple = true, directory = false) {
+  const result = await dialog.showOpenDialog(win, { title: directory ? tr('关联任务文件夹') : tr('关联任务文件'), buttonLabel: tr('选择'), properties: [directory ? 'openDirectory' : 'openFile', ...(multiple ? ['multiSelections'] : [])] });
   return result.canceled ? [] : inspectPaths(result.filePaths);
 }
 function clampBounds(bounds) {
@@ -78,7 +70,7 @@ function applySettings() {
   nativeTheme.themeSource = store.state.settings.theme;
   win.setHasShadow(!store.state.settings.desktopBlend);
   // A planner must never remain above the user's working application.
-  win.setAlwaysOnTop(false);
+  if (process.platform === 'win32') win.setAlwaysOnTop(false);
   if (process.platform !== 'linux') win.setMovable(!store.state.settings.positionFixed);
   positionWindow();
   registerQuickShortcut(); updateTray();
@@ -213,18 +205,18 @@ function registerIPC() {
       try { store.saveSettings(valid); } catch (e) { if ('autoStart' in valid) setAutoStart(oldAutoStart); throw e; }
       applySettings(); broadcast();
     },
-    'files:select': async () => pickFiles(),
-    'files:pick': async ({ taskId }) => { const files = await pickFiles(); if (files.length) { store.attach(taskId, files); broadcast(); } return files.length; },
+    'files:select': async ({ directory = false } = {}) => pickFiles(true, directory),
+    'files:pick': async ({ taskId, directory = false }) => { const files = await pickFiles(true, directory); if (files.length) { store.attach(taskId, files); broadcast(); } return files.length; },
     'files:drop': async ({ paths, taskId, level }) => {
       const files = inspectPaths(paths);
       const ids = taskId ? (store.attach(taskId, files), [taskId]) : store.createFromFiles(level, files);
       broadcast(); return ids;
     },
     'files:remove': async ({ taskId, fileId }) => { store.removeAttachment(taskId, fileId); broadcast(); },
-    'files:relink': async ({ taskId, fileId }) => { const files = await pickFiles(false); if (files.length) { store.relink(taskId, fileId, files[0]); broadcast(); } },
+    'files:relink': async ({ taskId, fileId }) => { const files = await pickFiles(false, taskFile(taskId, fileId).kind === 'directory'); if (files.length) { store.relink(taskId, fileId, files[0]); broadcast(); } },
     'files:check': async ({ taskId }) => {
       const task = store.state.tasks.find(t => t.id === taskId); if (!task) return [];
-      return await Promise.all(task.files.map(async file => { try { const stat = await fs.promises.stat(file.path); return { id: file.id, available: stat.isFile() }; } catch { return { id: file.id, available: false }; } }));
+      return await Promise.all(task.files.map(inspectAttachment));
     },
     'files:open': async ({ taskId, fileId, folder }) => {
       const file = taskFile(taskId, fileId); if (!fs.existsSync(file.path)) throw new Error(tr('文件不可用，请重新定位'));
@@ -274,12 +266,14 @@ async function start() {
   const bounds = panelBounds(store.state.settings, saved || area, area);
   win = new BrowserWindow({ ...bounds, show: false, frame: false, transparent: true, backgroundColor: '#00000000',
     resizable: false, maximizable: false, fullscreenable: false, hasShadow: true,
+    ...(process.platform === 'win32' ? {} : { type: 'desktop' }),
     title: tr('日序'), icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false, webSecurity: true } });
+  if (process.platform === 'win32') require('./native/build/Release/window_layer.node').attach(win.getNativeWindowHandle());
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', event => event.preventDefault());
   win.webContents.on('will-attach-webview', event => event.preventDefault());
-  win.setAlwaysOnTop(false);
+  if (process.platform === 'win32') win.setAlwaysOnTop(false);
   Menu.setApplicationMenu(null);
   unlockRegistered = globalShortcut.register(unlockShortcut, () => { try { setPanelLocked(!panelLocked); if (!panelLocked) showWindow(); } catch (e) { reportError(e); } });
   createTray(); registerIPC(); registerQuickShortcut(); applySettings();

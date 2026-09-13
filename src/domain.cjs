@@ -107,7 +107,7 @@ function validateState(data) {
       invariant(f && typeof f.id === 'string' && !fileIds.has(f.id), '文件关联标识无效'); fileIds.add(f.id);
       invariant(typeof f.path === 'string' && f.path.length > 0 && f.path.length < 32768 && !f.path.includes('\0'), '文件路径无效');
       invariant(f.path.startsWith('/') || /^[a-zA-Z]:[\\/]/.test(f.path) || f.path.startsWith('\\\\'), '文件必须使用绝对路径');
-      return { id: f.id, path: f.path, name: cleanText(f.name, 1024) || '文件' };
+      return { id: f.id, path: f.path, name: cleanText(f.name, 1024) || '文件', kind: f.kind === 'directory' ? 'directory' : 'file' };
     });
     const createdAt = parseDue(t.createdAt); invariant(createdAt, '任务创建时间无效');
     return {

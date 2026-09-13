@@ -3,6 +3,7 @@ const signedMac = !!process.env.CSC_LINK;
 module.exports = {
   appId: 'io.rixu', productName: '日序', executableName: 'rixu',
   asar: true,
+  asarUnpack: ['src/native/build/Release/*.node'],
   directories: { output: 'dist', buildResources: 'build' },
   files: ['src/**/*', 'package.json', '!src/assets/*.svg'],
   icon: 'src/assets/icon.png',

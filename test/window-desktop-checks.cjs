@@ -39,5 +39,35 @@ module.exports=async function checkWindow(runtime,js,call){
  const other=new BrowserWindow({width:300,height:200,show:true});
  try { other.focus();await sleep(150);assert.equal(other.isFocused(),true);runtime.clockCheck();await sleep(100);assert.equal(other.isFocused(),true);assert.equal(win.isAlwaysOnTop(),false); }
  finally { other.destroy(); }
+ const covering = new BrowserWindow({width:320,height:240,show:true});
+ try {
+  covering.focus();await sleep(150);
+  const checkLayer = () => {
+   if(process.platform==='linux') {
+    const {execFileSync}=require('node:child_process');
+    const id=win.getNativeWindowHandle().readUInt32LE(0), otherId=covering.getNativeWindowHandle().readUInt32LE(0);
+    const type=execFileSync('xprop',['-id',String(id),'_NET_WM_WINDOW_TYPE'],{encoding:'utf8'});
+    assert.match(type,/_NET_WM_WINDOW_TYPE_DESKTOP/);
+    const order=execFileSync('xprop',['-root','_NET_CLIENT_LIST_STACKING'],{encoding:'utf8'}).match(/0x[0-9a-f]+/g).map(n=>parseInt(n,16));
+    assert.ok(order.includes(id)&&order.includes(otherId));assert.ok(order.indexOf(id)<order.indexOf(otherId),'panel must stay below other windows after focus');
+   } else if(process.platform==='win32') {
+    const layer=require('../src/native/build/Release/window_layer.node');
+    assert.equal(layer.isBelow(win.getNativeWindowHandle(),covering.getNativeWindowHandle()),true);
+   }
+  };
+  checkLayer();
+  if(process.platform==='linux') {
+   const point=await js('(()=>{const r=document.querySelector("#new-task").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()');
+   const bounds=win.getBounds();
+   require('node:child_process').execFileSync('python3',[require('node:path').join(__dirname,'x11-click-type.py'),String(Math.round(bounds.x+point.x)),String(Math.round(bounds.y+point.y))]);
+   await sleep(200);assert.equal(await js('document.querySelector("#task-title").value'),'a','desktop layer receives real click and keyboard input');
+   checkLayer();await js('document.querySelector("#task-dialog").close()');
+  }
+  win.focus();await sleep(150);checkLayer();
+  win.moveTop();await sleep(150);checkLayer();
+  await call('window:compact',{enabled:true});win.focus();await sleep(150);checkLayer();
+  await call('window:compact',{enabled:false});
+ } finally { covering.destroy(); }
+
  await call('settings',{language:'zh-CN',desktopInset:0,transparency:65});
 };

@@ -136,7 +136,7 @@ class Store {
     });
   }
   createFromFiles(level, files) {
-    return this.mutate(s => files.map(file => { const t = createTask({ title: path.parse(file.name).name || file.name, level }); t.files.push({ id: randomUUID(), ...file }); s.tasks.push(t); return t.id; }));
+    return this.mutate(s => files.map(file => { const t = createTask({ title: file.kind === 'directory' ? file.name : (path.parse(file.name).name || file.name), level }); t.files.push({ id: randomUUID(), ...file }); s.tasks.push(t); return t.id; }));
   }
   removeAttachment(id, fileId) { this.mutate(s => { const t = this.task(s, id); t.files = t.files.filter(f => f.id !== fileId); }); }
   relink(id, fileId, file) {

@@ -1,6 +1,14 @@
 (function (root) {
   'use strict';
   const english = {
+  "一次请选择 1–100 个文件或文件夹": "Select 1\u2013100 files or folders",
+  "请选择电脑上的文件或文件夹": "Choose files or folders on this computer",
+  "仅支持普通文件和文件夹": "Only regular files and folders are supported",
+  "关联任务文件夹": "Link task folders",
+  "添加文件夹": "Add folder",
+  "拖入文件或文件夹，或点 ＋ 添加": "Drop files or folders here, or click +",
+  "添加文件或文件夹后，可以在这里直接打开。": "Add files or folders to open them here.",
+
   "解锁后拖动此处移动": "Unlock, then drag here to move",
   "面板和小窗均不置顶。解锁后拖动左侧图标栏的空白处，再固定位置。": "Neither panel stays on top. Unlock, drag the empty part of the left sidebar, then fix its position.",
   "固定位置": "Fix position",

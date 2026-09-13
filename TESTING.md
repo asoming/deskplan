@@ -1,10 +1,10 @@
 # Validation / 验证说明
 
-Rixu 1.0.2 uses three layers of validation. Actual platform results are attached to the release; workflow success must refer to its exact commit.
+Rixu 1.0.4 uses three layers of validation. Actual platform results are attached to the release; workflow success must refer to its exact commit.
 
 ## Unit and persistence tests
 
-`npm test` covers 42 tests (one symlink case is skipped on Windows): exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping, canonical renderer URL validation, monitor geometry, desktop margins, manual placement and legacy topmost migration.
+`npm test` covers 43 tests (one symlink case is skipped on Windows): exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping, canonical renderer URL validation, monitor geometry, desktop margins, manual placement and legacy topmost migration.
 
 ## Native UI tests
 
@@ -29,3 +29,7 @@ Passing builds and native tests do not prove trusted developer signatures, Apple
 ## Language switching
 
 `npm run test:language` tests live English/Chinese switching through Settings, all planner views and the calendar, editing without losing drafts, quick capture preferences, localized validation/native dialogs, and task preservation. Packaged and installed app smoke tests fully quit and restart the executable, checking that English and the original task survive. Each platform stores `language-test.json`.
+
+## Desktop layer and directories
+
+The release UI suite verifies native stack order on Linux and Windows after focus, raise and mini-mode requests. Linux also performs real mouse and keyboard input via XTest on the isolated display and verifies the panel remains below a covering window. The desktop suite drops an actual disk directory through Chromium and the preload bridge, opens and relinks it, and verifies task removal leaves its contents intact. Unit tests cover workspace files and folder metadata persistence.

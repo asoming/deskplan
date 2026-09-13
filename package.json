@@ -1,7 +1,7 @@
 {
   "name": "rixu-desktop",
   "productName": "日序",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "desktopName": "io.rixu.desktop",
   "private": true,
   "description": "日序：今天、本周、四象限与随手记录",
@@ -18,7 +18,8 @@
     "test:release": "electron test/release-desktop.cjs",
     "test:package": "node scripts/package-smoke.cjs",
     "test:distribution": "node scripts/verify-distribution.cjs",
-    "test:language": "electron test/language-desktop.cjs"
+    "test:language": "electron test/language-desktop.cjs",
+    "postinstall": "node scripts/build-window-layer.cjs"
   },
   "devDependencies": {
     "electron": "44.3.0",

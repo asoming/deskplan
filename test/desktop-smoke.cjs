@@ -68,6 +68,25 @@ async function until(fn, label) { for (let i = 0; i < 80; i++) { if (await fn())
   await execute(`(() => { const d = new DataTransfer(); d.items.add(document.querySelector('#smoke-file').files[0]); document.querySelector('[data-level="3"]').dispatchEvent(new DragEvent('drop', {bubbles:true,cancelable:true,dataTransfer:d})); })()`);
   await until(() => Promise.resolve(store.state.tasks.length === beforeDrop + 1), 'real file drop');
   assert.equal(store.state.tasks.at(-1).files[0].path, sample);
+  // A real on-disk directory travels through the same native File bridge as a file.
+  const folder=path.join(path.dirname(sample),'Project.v2');fs.mkdirSync(folder);fs.writeFileSync(path.join(folder,'keep.txt'),'original');
+  await win.webContents.debugger.sendCommand('DOM.setFileInputFiles',{nodeId:node.nodeId,files:[folder]});
+  await execute(`(() => { const d=new DataTransfer();d.items.add(document.querySelector('#smoke-file').files[0]);document.querySelector('[data-level="3"]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:d})); })()`);
+  await until(()=>Promise.resolve(store.state.tasks.some(t=>t.files.some(f=>f.path===folder))),'real folder drop');
+  const folderTask=store.state.tasks.find(t=>t.files.some(f=>f.path===folder));assert.equal(folderTask.title,'Project.v2');assert.equal(folderTask.files[0].kind,'directory');
+  const available=await execute(`window.fourfold.call('files:check',{taskId:'${folderTask.id}'})`);assert.equal(available[0].available,true);
+  const shell=require('electron').shell,dialog=require('electron').dialog,originalOpen=shell.openPath,originalDialog=dialog.showOpenDialog;let opened;
+  try {
+    shell.openPath=async p=>{opened=p;return '';};
+    await execute(`window.fourfold.call('files:open',{taskId:'${folderTask.id}',fileId:'${folderTask.files[0].id}'})`);assert.equal(opened,folder);
+    const moved=folder+'-moved';fs.renameSync(folder,moved);
+    assert.equal((await execute(`window.fourfold.call('files:check',{taskId:'${folderTask.id}'})`))[0].available,false);
+    dialog.showOpenDialog=async(_win,options)=>{assert.ok(options.properties.includes('openDirectory'));return {canceled:false,filePaths:[moved]};};
+    await execute(`window.fourfold.call('files:relink',{taskId:'${folderTask.id}',fileId:'${folderTask.files[0].id}'})`);
+    assert.equal(store.state.tasks.find(t=>t.id===folderTask.id).files[0].kind,'directory');
+    assert.equal((await execute(`window.fourfold.call('files:check',{taskId:'${folderTask.id}'})`))[0].available,true);
+    await execute(`window.fourfold.call('status',{id:'${folderTask.id}',action:'delete'})`);assert.equal(fs.readFileSync(path.join(moved,'keep.txt'),'utf8'),'original');
+  } finally {shell.openPath=originalOpen;dialog.showOpenDialog=originalDialog;}
   win.webContents.debugger.detach();
 
   await execute('document.querySelector("#opacity-button").click(); document.querySelector("#transparency").value = "65"; document.querySelector("#transparency").dispatchEvent(new Event("input")); document.querySelector("#transparency").dispatchEvent(new Event("change"))');
