@@ -1,6 +1,7 @@
 (function (root) {
   'use strict';
   const english = {
+  "锁定": "Locked",
   "0 表示未估时": "0 means not estimated",
   "30 分钟后提醒": "Remind in 30 min",
   "30 分钟后提醒，截止时间不变": "Reminder set for 30 minutes; deadline unchanged",

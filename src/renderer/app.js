@@ -40,6 +40,7 @@
     setLanguage(state.settings.language);
     if (languageChanged) {
       translateStatic();
+      $('.brand').dataset.lockLabel = tr('锁定');
       labels = ['马上做', '尽快做', '按计划做', '先放着'].map(value => tr(value));
       repeatLabels = { daily: tr('每天'), weekdays: tr('工作日'), weekly: tr('每周'), monthly: tr('每月') };
       $('#task-dialog-title').textContent = tr(editingId ? '任务详情' : '新建任务');

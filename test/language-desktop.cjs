@@ -31,6 +31,11 @@ async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await
    assert.deepEqual(await js('window.RixuI18n.missing()'),[],view+' translation coverage');
  }
  assert.match(await js('document.querySelector(".month-heading").textContent'),/[A-Za-z]/);
+ if(runtime.viewState().native.unlockShortcutRegistered || runtime.viewState().native.trayAvailable){
+   await call('window:lock',{locked:true});
+   assert.equal(await js('getComputedStyle(document.querySelector(".brand"),"::after").content'),'"Locked"');
+   await call('window:lock',{locked:false});
+ }
  await js(`document.querySelector('[data-edit="${id}"]').click()`);
  await until(()=>js('document.querySelector("#task-dialog").open'),'editor');
  await js('document.querySelector("#task-notes").value="未保存的内容"');
