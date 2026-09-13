@@ -21,6 +21,7 @@ module.exports = {
   win: { target: ['nsis'], icon: 'src/assets/icon.png', artifactName: 'Rixu-${version}-windows-${arch}-setup.${ext}' },
   nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, createDesktopShortcut: true, createStartMenuShortcut: true, shortcutName: '日序', runAfterFinish: false, deleteAppDataOnUninstall: false },
   mac: {
+    executableName: '日序',
     target: ['dmg', 'zip'], category: 'public.app-category.productivity', icon: 'src/assets/icon.png',
     identity: signedMac ? undefined : '-', hardenedRuntime: signedMac,
     notarize: signedMac && !!process.env.APPLE_ID && !!process.env.APPLE_APP_SPECIFIC_PASSWORD && !!process.env.APPLE_TEAM_ID,

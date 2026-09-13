@@ -3,7 +3,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme, Menu, Tray, nativeImage, Notification, screen, powerMonitor, session, globalShortcut } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
-const { pathToFileURL } = require('node:url');
+const { isTrustedFileURL } = require('./trusted-file.cjs');
 const { Store, atomicWrite } = require('./store.cjs');
 const { exportCSV } = require('./export.cjs');
 const { effectiveLevel, pendingReminders, validateSettings } = require('./domain.cjs');
@@ -20,7 +20,6 @@ if (dataDirectory) app.setPath('userData', path.resolve(dataDirectory));
 const isTest = process.env.RIXU_TEST === '1' || process.env.FOURFOLD_TEST === '1';
 const sizes = { compact: [760, 540], normal: [960, 640], large: [1180, 760] };
 const indexFile = path.join(__dirname, 'renderer', 'index.html');
-const indexURL = pathToFileURL(indexFile).href;
 let panelLocked = false, unlockRegistered = false;
 const unlockShortcut = 'CommandOrControl+Shift+L';
 let quickWin, quickRegistered = false, registeredAccelerator = null, normalBounds;
@@ -223,8 +222,8 @@ function registerIPC() {
     'window:quit': async () => { quitting = true; app.quit(); },
   };
   for (const [name, handler] of Object.entries(handlers)) ipcMain.handle(`fourfold:${name}`, async (event, payload) => {
-    const fromMain = event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame && event.senderFrame.url === indexURL;
-    const fromQuick = quickWin && !quickWin.isDestroyed() && event.sender === quickWin.webContents && event.senderFrame === quickWin.webContents.mainFrame && event.senderFrame.url === pathToFileURL(path.join(__dirname, 'renderer', 'quick.html')).href;
+    const fromMain = event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame && isTrustedFileURL(event.senderFrame.url, indexFile);
+    const fromQuick = quickWin && !quickWin.isDestroyed() && event.sender === quickWin.webContents && event.senderFrame === quickWin.webContents.mainFrame && isTrustedFileURL(event.senderFrame.url, path.join(__dirname, 'renderer', 'quick.html'));
     if (!fromMain && !(fromQuick && ['quick:create', 'quick:hide'].includes(name))) throw new Error('请求来源无效');
     try { return { ok: true, value: await handler(payload) }; } catch (e) { return { ok: false, error: e.message || '操作失败' }; }
   });

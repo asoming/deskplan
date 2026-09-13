@@ -4,7 +4,7 @@ Rixu 1.0.0 uses three layers of validation. Actual platform results are attached
 
 ## Unit and persistence tests
 
-`npm test` covers 33 tests: exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping.
+`npm test` covers 35 tests (one symlink case is skipped on Windows): exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping, and canonical renderer URL validation.
 
 ## Native UI tests
 
