@@ -10,13 +10,14 @@
     "start": "electron .",
     "test": "node --test test/*.test.cjs",
     "test:desktop": "electron test/desktop-smoke.cjs",
-    "package": "electron-builder --publish never",
+    "package": "node scripts/build.cjs",
     "test:planner": "electron test/planner-desktop.cjs",
-    "package:linux": "electron-builder --linux deb tar.gz --x64 --publish never",
-    "package:win": "electron-builder --win nsis --x64 --publish never",
-    "package:mac": "electron-builder --mac dmg zip --publish never",
+    "package:linux": "node scripts/build.cjs --linux deb tar.gz --x64",
+    "package:win": "node scripts/build.cjs --win nsis --x64",
+    "package:mac": "node scripts/build.cjs --mac dmg zip",
     "test:release": "electron test/release-desktop.cjs",
-    "test:package": "node scripts/package-smoke.cjs"
+    "test:package": "node scripts/package-smoke.cjs",
+    "test:distribution": "node scripts/verify-distribution.cjs"
   },
   "devDependencies": {
     "electron": "44.3.0",

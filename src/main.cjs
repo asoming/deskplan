@@ -14,7 +14,7 @@ app.setName('日序');
 if (process.platform === 'linux') app.setDesktopName('io.rixu.desktop');
 if (process.platform === 'win32') app.setAppUserModelId('io.rixu');
 // This panel has no GPU-dependent content. Software rendering also works on remote Linux desktops.
-if (process.platform === 'linux') app.disableHardwareAcceleration();
+if (process.platform === 'linux' || (process.platform === 'darwin' && process.arch === 'x64')) app.disableHardwareAcceleration();
 const dataDirectory = process.env.RIXU_DATA_DIR || process.env.FOURFOLD_DATA_DIR;
 if (dataDirectory) app.setPath('userData', path.resolve(dataDirectory));
 const isTest = process.env.RIXU_TEST === '1' || process.env.FOURFOLD_TEST === '1';

@@ -350,7 +350,9 @@
     }
   });
   document.addEventListener('drop', event => { event.preventDefault(); handleDrop(event); });
+  document.addEventListener('pointerdown', () => document.body.classList.remove('keyboard-navigation'));
   document.addEventListener('keydown', action(async event => {
+    if (event.key === 'Tab') document.body.classList.add('keyboard-navigation');
     if (event.key === 'Escape') closePopovers();
     const command = event.ctrlKey || event.metaKey;
     if (!command) return;

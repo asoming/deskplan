@@ -30,5 +30,5 @@ async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expres
  const saved=JSON.parse(fs.readFileSync(path.join(directory,'tasks.json'),'utf8'));assert.equal(saved.tasks[0].title,'Packaged save / 正式包保存');assert.equal(saved.schemaVersion,3);
  const result={passed:true,platform:process.platform,arch:process.arch,version:initial.native.version,checks:['packaged executable','asar preload and renderer','packaged integrations','UI create','durable schema 3 save','clean exit'],sandbox:!flags.includes('--no-sandbox')};
  finished=true;evaluate('window.fourfold.call("window:quit")').catch(()=>{});const ended=await exit;assert.equal(ended.code,0);socket.close();clearTimeout(timeout);
- const artifacts=process.env.RIXU_ARTIFACTS_DIR;if(artifacts){fs.mkdirSync(artifacts,{recursive:true});fs.writeFileSync(path.join(artifacts,'package-test.json'),JSON.stringify(result,null,2));}console.log(JSON.stringify(result));
+ const artifacts=process.env.RIXU_ARTIFACTS_DIR;if(artifacts){fs.mkdirSync(artifacts,{recursive:true});fs.writeFileSync(path.join(artifacts,process.argv[2] ? 'installed-package-test.json' : 'package-test.json'),JSON.stringify(result,null,2));}console.log(JSON.stringify(result));
 })().catch(error=>{console.error(error);clearTimeout(timeout);socket?.close();child.kill();process.exitCode=1;});

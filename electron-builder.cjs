@@ -9,8 +9,8 @@ module.exports = {
   artifactName: 'Rixu-${version}-${os}-${arch}.${ext}',
   publish: null,
   linux: {
-    target: ['deb', 'tar.gz'], category: 'Office', executableName: 'rixu',
-    icon: 'src/assets/icon.png',
+    target: ['deb', 'tar.gz'], category: 'Office', executableName: 'rixu', syncDesktopName: true,
+    icon: 'build/icons',
     maintainer: 'asoming <185788094+asoming@users.noreply.github.com>',
     desktop: { entry: { Name: '日序', 'Name[en]': 'Rixu', Comment: 'Local-first desktop planning', StartupWMClass: 'io.rixu', Keywords: 'Tasks;Todo;Planner;Calendar;日序;计划;' } },
   },
