@@ -27,7 +27,10 @@ module.exports=async function(runtime,js,call,setResponse){
   try {
     other.focus();await sleep(100);await runtime.updater.check();await sleep(100);
     assert.equal(other.isFocused(),true);assert.equal(await js('document.querySelector("#update-dialog").open'),false,'background check must defer popup');
-    win.focus();await sleep(200);assert.equal(await js('document.querySelector("#update-dialog").open'),true);
+    win.focus();
+    for(let i=0;i<40 && !await js('document.querySelector("#update-dialog").open');i++)await sleep(50);
+    assert.equal(win.isFocused(),true,'planner receives native focus');
+    assert.equal(await js('document.querySelector("#update-dialog").open'),true,'returning native window focus shows the pending update');
     assert.equal(runtime.updater.state.notifiedVersion,'9.8.7');
     await call('settings',{language:'en'});
     assert.match(await js('document.querySelector("#update-versions").textContent'),/Current .*New 9.8.7/);

@@ -14,6 +14,7 @@
   const localTime = value => { if (!value) return ''; const d = new Date(value); return `${dateKey(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
   const fullDate = value => value ? new Date(value).toLocaleString(locale(), { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : tr('未设置截止时间');
   const taskDay = task => task.due ? dateKey(new Date(task.due)) : '';
+  let panelActive = false;
   let state, now = Date.now(), month = new Date(new Date().getFullYear(), new Date().getMonth(), 1), selectedDay = '', draggedId = null;
   let draftChecklist = [];
   let repeatLabels = { daily: tr('每天'), weekdays: tr('工作日'), weekly: tr('每周'), monthly: tr('每月') };
@@ -36,7 +37,7 @@
   }
   function receive(next) {
     const languageChanged = !state || state.settings.language !== next.settings.language;
-    state = next;
+    state = next; panelActive = !!next.native.panelActive;
     setLanguage(state.settings.language);
     if (languageChanged) {
       translateStatic();
@@ -280,7 +281,7 @@
   function tryShowUpdate(manual = false) {
     const update = state?.updates;
     if (update?.status !== 'available' || $('#update-dialog').open) return;
-    if (!manual && (!state.settings.autoUpdates || update.notifiedVersion === update.release.version || !document.hasFocus() || movingPointer !== null || document.querySelector('dialog[open]'))) return;
+    if (!manual && (!state.settings.autoUpdates || update.notifiedVersion === update.release.version || !panelActive || movingPointer !== null || document.querySelector('dialog[open]'))) return;
     $('#update-versions').textContent = tr`当前 ${state.native.version} → 新版 ${update.release.version}`;
     state = { ...state, updates: { ...update, notifiedVersion: update.release.version } };
     $('#update-dialog').showModal();
@@ -289,7 +290,6 @@
   $('#check-updates').onclick = action(async () => { const updates = await call('updates:check'); state = { ...state, updates }; renderUpdateStatus(); tryShowUpdate(true); });
   $('#download-update').onclick = $('#settings-download-update').onclick = action(() => call('updates:open'));
   $('#dismiss-update').onclick = () => $('#update-dialog').close();
-  window.addEventListener('focus', () => tryShowUpdate());
   document.addEventListener('close', () => tryShowUpdate(), true);
 
   async function reschedule(id, targetDay) {
@@ -426,6 +426,7 @@
   }));
 
   if (!api) { $('#task-count').textContent = tr('请通过桌面应用启动日序'); return; }
+  api.onActive(active => { panelActive = active; tryShowUpdate(); });
   api.onCommand(command => { if (command === 'settings') $('#settings-button').click(); if (command === 'compact') $('#compact-toggle').click(); });
   api.onState(receive);
   api.onMessage(text => toast(text));

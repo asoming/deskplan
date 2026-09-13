@@ -35,7 +35,7 @@ let win, tray, store, quitting = false, timer, lastCheck = Date.now(), lastLevel
 function viewState() {
   return {
     ...store.snapshot(), updates: updater?.snapshot(), canUndo: store.history.length > 0, recoveryNotice: tr(store.recoveryNotice),
-    native: { platform: process.platform, notificationsSupported: Notification.isSupported(), trayAvailable: !!tray,
+    native: { panelActive: !!win?.isFocused(), platform: process.platform, notificationsSupported: Notification.isSupported(), trayAvailable: !!tray,
       quickShortcutRegistered: quickRegistered, version: require('../package.json').version,
       autoStartSupported: process.platform !== 'linux' || app.isPackaged },
   };
@@ -307,7 +307,8 @@ async function start(options = {}) {
     menu.popup({ window: win });
   });
   win.on('minimize', () => { if (!quitting) win.restore(); });
-  win.on('blur', () => { windowDrag = null; });
+  win.on('focus', () => win.webContents.send('fourfold:active', true));
+  win.on('blur', () => { windowDrag = null; win.webContents.send('fourfold:active', false); });
   win.on('will-move', event => { if (store.state.settings.positionFixed) event.preventDefault(); });
   win.on('move', () => {
     if (store.state.settings.positionFixed && fixedBounds && !sameBounds(win.getBounds(), fixedBounds)) {
