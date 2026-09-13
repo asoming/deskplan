@@ -1,16 +1,16 @@
 # Validation / 验证说明
 
-Rixu 1.0.1 uses three layers of validation. Actual platform results are attached to the release; workflow success must refer to its exact commit.
+Rixu 1.0.2 uses three layers of validation. Actual platform results are attached to the release; workflow success must refer to its exact commit.
 
 ## Unit and persistence tests
 
-`npm test` covers 38 tests (one symlink case is skipped on Windows): exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping, and canonical renderer URL validation.
+`npm test` covers 42 tests (one symlink case is skipped on Windows): exact 48-hour urgency transitions, reminder thresholds and deduplication, time-zone-equivalent instants, atomic write failures, backup recovery, undo, attachment preservation, schema migration, top-three limits, schedule/deadline independence, recurrence anchors and missed dates, checklist resets, snooze semantics, and CSV escaping, canonical renderer URL validation, monitor geometry, desktop margins, manual placement and legacy topmost migration.
 
 ## Native UI tests
 
 `npm run test:desktop` exercises actual Electron windows and the isolated preload bridge: editor create/update, HTML escaping, calendar selection, task drag, real disk-file drop, deadline promotion, completion/undo, missing attachments, transparent backgrounds and light/dark layouts.
 
-`npm run test:release` exercises desktop blend mode, checklist editing, recurrence generation/undo, recoverable mouse-through locking and independent transparent surfaces/readable text. `npm run test:planner` additionally covers Today reordering, the three-priority limit, the seven-day workload view, quick capture and mini-window behavior.
+`npm run test:release` exercises desktop blend mode, checklist editing, recurrence generation/undo, recoverable mouse-through locking and independent transparent surfaces/readable text. It also tests right-corner docking, reserved desktop space, a fixed yet interactive panel, manual position preservation, both panels staying non-topmost, no focus stealing during a background check, and accessible translated sidebar icons without a panel logo. `npm run test:planner` additionally covers Today reordering, the three-priority limit, the seven-day workload view, quick capture and mini-window behavior.
 
 Source tests use an isolated temporary data directory. Screenshots contain generated examples only. Set `RIXU_ARTIFACTS_DIR` to save screenshots and JSON results. Global shortcuts can be occupied by another running instance; the planner test uses the alternative capture shortcut.
 
@@ -24,7 +24,7 @@ The four-job workflow runs on Linux x64, Windows x64, Apple Silicon macOS and In
 
 Passing builds and native tests do not prove trusted developer signatures, Apple notarization, compatibility with every Linux compositor, or delivery and click behavior of every OS notification service. Signing state and environment-specific limits remain explicit in README and release notes.
 
-本机 Linux 已验证真实 Ctrl + Shift + 空格唤起与 Esc 收起、透明面板、任务文件拖入、置顶小窗和持久化。跨平台最终结果以 GitHub Actions 及发行页附带报告为准；不把“配置了工作流”等同于“构建已通过”。
+1.0.2 本地桌面回归在独立 Xvfb + Openbox 虚拟显示运行，使用临时数据，没有操作或重启用户正在使用的桌面 App。后续 GUI 测试同样必须使用隔离显示或 CI；跨平台最终结果以 GitHub Actions 及发行页附带报告为准。
 
 ## Language switching
 
