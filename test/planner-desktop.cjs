@@ -41,9 +41,9 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  await until(()=>Promise.resolve(!q.isVisible()),'capture hides');assert.equal(s.state.tasks.at(-1).title,'从快捷输入记录');assert.equal(s.state.tasks.at(-1).inbox,true);
  const unauthorized=await q.webContents.executeJavaScript(`window.fourfold.call('state').then(()=>'accepted').catch(()=> 'denied')`,true);assert.equal(unauthorized,'denied');
  await shot('日序-收集箱.png');
- await call('current',{id:b});await call('window:compact',{enabled:true});assert.equal(win.isAlwaysOnTop(),false);assert.deepEqual(win.getSize(),[390,320]);
+ const expandedSize=win.getSize();await call('current',{id:b});await call('window:compact',{enabled:true});assert.equal(win.isAlwaysOnTop(),false);assert.deepEqual(win.getSize(),[390,320]);
  await until(()=>js('document.querySelectorAll(".compact-task").length===3'),'compact queue');assert.equal(await js('document.querySelector(".current-task .task-title").textContent'),'阅读一章书');
- await shot('日序-小窗.png');await call('window:compact',{enabled:false});assert.deepEqual(win.getSize(),[960,640]);
+ await shot('日序-小窗.png');await call('window:compact',{enabled:false});assert.deepEqual(win.getSize(),expandedSize);
  await call('settings',{view:'quadrants',calendarOpen:true});await shot('日序-四象限.png');
  const colors=await js('[...document.querySelectorAll(".zone-heading h2")].map(e=>getComputedStyle(e).color)');assert.equal(new Set(colors).size,4);
  await call('settings',{transparency:100,textTransparency:0});
