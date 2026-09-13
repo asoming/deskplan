@@ -36,7 +36,29 @@
   </defs></svg>
 
   <div class="app-window" id="app">
-    <aside class="tool-rail" aria-label="面板工具"><nav class="view-tabs" aria-label="任务视图"><button data-tab="today" aria-label="今天" title="今天"><svg class="icon" aria-hidden="true"><use href="#i-today"/></svg></button><button data-tab="week" aria-label="本周" title="本周"><svg class="icon" aria-hidden="true"><use href="#i-week"/></svg></button><button data-tab="quadrants" aria-label="四象限" title="四象限"><svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg></button><button data-tab="inbox" aria-label="收集箱" title="收集箱"><svg class="icon" aria-hidden="true"><use href="#i-inbox"/></svg><span id="inbox-count"></span></button></nav><div class="rail-divider"></div><div class="toolbar-controls"><button id="new-task" aria-label="新建任务" title="新建任务" ><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></button><button id="calendar-toggle" aria-label="显示日历" title="显示日历" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg></button><button id="search-button" aria-label="搜索任务" title="搜索任务" ><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg></button><button id="opacity-button" aria-label="调整背景透明度" title="调整背景透明度" aria-expanded="false"><span class="opacity-dot"></span><span id="opacity-label" hidden>35%</span></button><button id="blend-toggle" aria-label="切换桌面融合模式" title="切换桌面融合模式" ><svg class="icon" aria-hidden="true"><use href="#i-blend"/></svg></button><button id="compact-toggle" aria-label="缩为小窗" title="缩为小窗" ><svg class="icon" aria-hidden="true"><use href="#i-compact"/></svg></button></div><div class="rail-spacer"></div><div class="toolbar-controls"><button id="position-toggle" aria-label="解锁位置" title="解锁位置" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg></button><button id="dock-right" aria-label="停靠右上角" title="停靠右上角" ><svg class="icon" aria-hidden="true"><use href="#i-dock"/></svg></button><button id="settings-button" aria-label="设置与备份" title="设置与备份" ><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg></button><button id="menu-button" aria-label="更多" title="更多" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button><button id="minimize" aria-label="最小化" title="最小化" ><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg></button><button id="close-window" aria-label="关闭面板" title="关闭面板" ><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div></aside>
+    <aside class="tool-rail" aria-label="面板工具">
+      <nav class="view-tabs" aria-label="任务视图"><button data-tab="today" aria-label="今天" title="今天"><svg class="icon" aria-hidden="true"><use href="#i-today"/></svg></button>
+      <button data-tab="week" aria-label="本周" title="本周"><svg class="icon" aria-hidden="true"><use href="#i-week"/></svg></button>
+      <button data-tab="quadrants" aria-label="四象限" title="四象限"><svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg></button>
+      <button data-tab="inbox" aria-label="收集箱" title="收集箱"><svg class="icon" aria-hidden="true"><use href="#i-inbox"/></svg><span id="inbox-count"></span></button>
+      </nav>
+      <div class="rail-divider"></div>
+      <div class="toolbar-controls"><button id="new-task" aria-label="新建任务" title="新建任务" ><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></button>
+      <button id="calendar-toggle" aria-label="显示日历" title="显示日历" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg></button>
+      <button id="search-button" aria-label="搜索任务" title="搜索任务" ><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg></button>
+      <button id="opacity-button" aria-label="调整背景透明度" title="调整背景透明度" aria-expanded="false"><span class="opacity-dot"></span><span id="opacity-label" hidden>35%</span></button>
+      <button id="blend-toggle" aria-label="切换桌面融合模式" title="切换桌面融合模式" ><svg class="icon" aria-hidden="true"><use href="#i-blend"/></svg></button>
+      <button id="compact-toggle" aria-label="缩为小窗" title="缩为小窗" ><svg class="icon" aria-hidden="true"><use href="#i-compact"/></svg></button>
+      </div>
+      <div class="rail-spacer"></div>
+      <div class="toolbar-controls"><button id="position-toggle" aria-label="解锁位置" title="解锁位置" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg></button>
+      <button id="dock-right" aria-label="停靠右上角" title="停靠右上角" ><svg class="icon" aria-hidden="true"><use href="#i-dock"/></svg></button>
+      <button id="settings-button" aria-label="设置与备份" title="设置与备份" ><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg></button>
+      <button id="menu-button" aria-label="更多" title="更多" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button>
+      <button id="minimize" aria-label="最小化" title="最小化" ><svg class="icon" aria-hidden="true"><use href="#i-minus"/></svg></button>
+      <button id="close-window" aria-label="关闭面板" title="关闭面板" ><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      </aside>
     <header class="toolbar"><span id="position-status"></span><span id="view-caption"></span></header>
     <div class="popover opacity-popover" id="opacity-popover" hidden>
       <label for="transparency">背景透明度 <output id="transparency-value">35%</output></label>
