@@ -16,8 +16,10 @@ Build workflows cover Windows, Linux, Apple Silicon Macs and Intel Macs. See the
 
 ## Top-right docking and a fixed position (1.0.2)
 
-Rixu starts at the top right of the screen work area with a 24 px margin plus 120 px reserved on the right for a column of desktop files; fresh installs use 760 × 540. Position is fixed by default while task editing and file drops remain available. Use the pin in the left sidebar to unlock, drag the top strip, then fix the position again. The diagonal arrow docks it at the top right. Settings can reserve an additional 0–480 px on the right. Mini mode keeps the same corner; manual placement is restored when expanded. Monitor changes keep the window in the available work area.
+Rixu starts flush with the top-right corner of the screen work area, with no outer window or panel gap; fresh installs use 760 × 540. Position is fixed by default while task editing and file drops remain available. Use the pin in the left sidebar to unlock, drag the empty part of the left sidebar, then fix the position again. The diagonal arrow docks it flush at the top right and resets the right margin to zero. Settings can reserve an additional 0–480 px on the right. Mini mode keeps the same corner; manual placement is restored when expanded. Monitor changes keep the window in the available work area.
 
 The main panel, mini panel and quick capture never stay on top. Legacy topmost preferences are disabled. Controls live in a narrow left sidebar with translated hover labels; the panel no longer shows a brand logo. The application launcher retains its icon.
 
 Position locking does not pass clicks through. Mouse-through is a separate command. Rixu does not move desktop files and cannot automatically detect every desktop icon across operating systems. Use the right margin, manual position, mouse-through or hide the panel to make room. GUI tests run on an isolated display or in CI; updates do not automatically restart a working user instance.
+
+Version 1.0.3 removes the entire top caption row; the empty part of the sidebar becomes the unlocked drag area. Flush docking still respects the operating system menu bar and taskbar.

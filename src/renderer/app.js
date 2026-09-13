@@ -62,7 +62,8 @@
     $('#position-toggle').setAttribute('aria-pressed', String(state.settings.positionFixed));
     $('#position-toggle').setAttribute('aria-label', state.settings.positionFixed ? tr('解锁位置') : tr('固定位置'));
     $('#position-toggle').title = $('#position-toggle').getAttribute('aria-label');
-    $('#position-status').textContent = state.native.panelLocked ? tr('鼠标穿透中') : state.settings.positionFixed ? tr('位置已固定') : tr('拖动此处移动');
+    $('#app').setAttribute('aria-label', state.native.panelLocked ? tr('鼠标穿透中') : tr('日序'));
+    document.body.classList.toggle('edge-docked', state.settings.windowPosition === 'top-right' && state.settings.desktopInset === 0);
     renderBoard(); renderCalendar(); renderPlanner();
     if ($('#library-dialog').open) renderLibrary();
     if ($('#settings-dialog').open) renderSettings();
@@ -102,7 +103,6 @@
     const top = todays.filter(t => t.focusDay === today), other = todays.filter(t => t.focusDay !== today);
     $('#inbox-count').textContent = inbox.length || '';
     $('#task-count').textContent = tr`${active.length} 件待办`;
-    $('#view-caption').textContent = view === 'quadrants' ? tr('按紧急程度，轻重有序') : view === 'week' ? tr('安排日期与截止日期独立') : view === 'inbox' ? tr('先记下来，稍后安排') : new Date(now).toLocaleDateString(locale(), { month: 'long', day: 'numeric', weekday: 'long' });
     const total = todays.reduce((sum, t) => sum + t.estimatedMinutes, 0);
     if (view === 'today') {
       $('#planner').className = 'planner today-view';
@@ -300,7 +300,7 @@
   $('#close-window').onclick = action(() => call('window:close'));
   $('#quit').onclick = action(() => call('window:quit'));
   $('#position-toggle').onclick = action(() => call('settings', { positionFixed: !state.settings.positionFixed, windowPosition: 'manual' }));
-  $('#dock-right').onclick = action(() => call('settings', { windowPosition: 'top-right', positionFixed: true }));
+  $('#dock-right').onclick = action(() => call('settings', { windowPosition: 'top-right', positionFixed: true, desktopInset: 0 }));
   $('#settings-button').onclick = () => { closePopovers(); renderSettings(); $('#settings-dialog').showModal(); };
   $('#undo').onclick = action(async () => { await call('undo'); toast(tr('已撤销')); });
   $('#export-backup').onclick = action(async () => { if (await call('backup:export')) toast(tr('备份已导出，不包含原文件')); });

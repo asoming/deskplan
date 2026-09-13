@@ -50,7 +50,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  assert.equal(await js('getComputedStyle(document.querySelector("#app")).backgroundColor'),'rgba(246, 249, 245, 0)');
  const backgrounds=await js('[...document.querySelectorAll(".zone,.task")].map(e=>getComputedStyle(e).backgroundColor)');assert.ok(backgrounds.every(x=>x==='rgba(0, 0, 0, 0)'||x.endsWith(', 0)')||x.endsWith('/ 0)')),JSON.stringify(backgrounds));
  assert.equal(await js('getComputedStyle(document.querySelector(".task-top")).opacity'),'1');
- await call('settings',{textTransparency:65});assert.equal(await js('getComputedStyle(document.querySelector(".task-top")).opacity'),'0.35');assert.equal(await js('getComputedStyle(document.querySelector(".toolbar")).opacity'),'1');
+ await call('settings',{textTransparency:65});assert.equal(await js('getComputedStyle(document.querySelector(".task-top")).opacity'),'0.35');assert.equal(await js('getComputedStyle(document.querySelector(".tool-rail")).opacity'),'1');
  await call('settings',{transparency:35,textTransparency:0});
  await js(`document.querySelector('[data-review="${late}"]').click()`);await until(()=>js('document.querySelector("#review-dialog").open'),'review');
  await js('document.querySelector("[data-review-choice=keep]").click()');await until(()=>js('!document.querySelector("#review-dialog").open'),'keep');assert.equal(s.state.tasks.find(t=>t.id===late).status,'active');

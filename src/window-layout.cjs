@@ -1,7 +1,7 @@
 'use strict';
 const sizes = { compact: [760, 540], normal: [960, 640], large: [1180, 760] };
 function panelBounds(settings, current, area) {
-  const margin = 24;
+  const margin = 0;
   const [wantedWidth, wantedHeight] = settings.compactMode ? [390, 320] : sizes[settings.windowSize];
   const width = Math.min(wantedWidth, Math.max(1, area.width - margin * 2));
   const height = Math.min(wantedHeight, Math.max(1, area.height - margin * 2));

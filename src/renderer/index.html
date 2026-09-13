@@ -35,7 +35,7 @@
     <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18m-12-6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3m12-6 3 3-3 3"/></symbol>
   </defs></svg>
 
-  <div class="app-window" id="app">
+  <div class="app-window" id="app" role="region" aria-label="日序">
     <aside class="tool-rail" aria-label="面板工具">
       <nav class="view-tabs" aria-label="任务视图"><button data-tab="today" aria-label="今天" title="今天"><svg class="icon" aria-hidden="true"><use href="#i-today"/></svg></button>
       <button data-tab="week" aria-label="本周" title="本周"><svg class="icon" aria-hidden="true"><use href="#i-week"/></svg></button>
@@ -50,7 +50,7 @@
       <button id="blend-toggle" aria-label="切换桌面融合模式" title="切换桌面融合模式" ><svg class="icon" aria-hidden="true"><use href="#i-blend"/></svg></button>
       <button id="compact-toggle" aria-label="缩为小窗" title="缩为小窗" ><svg class="icon" aria-hidden="true"><use href="#i-compact"/></svg></button>
       </div>
-      <div class="rail-spacer"></div>
+      <div class="rail-spacer" title="解锁后拖动此处移动"></div>
       <div class="toolbar-controls"><button id="position-toggle" aria-label="解锁位置" title="解锁位置" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg></button>
       <button id="dock-right" aria-label="停靠右上角" title="停靠右上角" ><svg class="icon" aria-hidden="true"><use href="#i-dock"/></svg></button>
       <button id="settings-button" aria-label="设置与备份" title="设置与备份" ><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg></button>
@@ -59,7 +59,6 @@
       <button id="close-window" aria-label="关闭面板" title="关闭面板" ><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
       </div>
       </aside>
-    <header class="toolbar"><span id="position-status"></span><span id="view-caption"></span></header>
     <div class="popover opacity-popover" id="opacity-popover" hidden>
       <label for="transparency">背景透明度 <output id="transparency-value">35%</output></label>
       <input id="transparency" type="range" min="0" max="100" value="35">
@@ -117,7 +116,7 @@
       <label class="setting-row"><span>固定位置 <small>禁止拖动窗口，仍可操作任务和拖入文件</small></span><input type="checkbox" data-setting="positionFixed"></label>
       <label class="setting-row"><span>停靠位置</span><select data-setting="windowPosition"><option value="top-right">右上角</option><option value="manual">手动位置</option></select></label>
       <label class="setting-row"><span>右侧留白（像素） <small>为右侧桌面文件留出空间</small></span><input type="number" min="0" max="480" step="24" data-setting="desktopInset"></label>
-      <p>面板和小窗均不置顶。解锁后拖动顶部空白处，再固定位置。</p>
+      <p>面板和小窗均不置顶。解锁后拖动左侧图标栏的空白处，再固定位置。</p>
       <label class="setting-row"><span>关闭面板后留在后台</span><input type="checkbox" data-setting="closeToTray"></label>
       <label class="setting-row"><span>开机启动 <small id="autostart-hint"></small></span><input type="checkbox" data-setting="autoStart"></label></section>
       <section><h2>安排与随手记</h2><label class="setting-row"><span>每日可安排时间（分钟）</span><input type="number" min="30" max="1440" step="30" data-setting="dailyCapacity"></label><label class="setting-row"><span>全局快捷输入 <small id="quick-hint"></small></span><input type="checkbox" data-setting="quickCapture"></label><label class="setting-row"><span>快捷键</span><select data-setting="quickShortcut"><option value="CommandOrControl+Shift+Space">Ctrl / ⌘ + Shift + 空格</option><option value="Alt+Shift+Space">Alt + Shift + 空格</option></select></label></section>

@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
   const english = {
+  "解锁后拖动此处移动": "Unlock, then drag here to move",
+  "面板和小窗均不置顶。解锁后拖动左侧图标栏的空白处，再固定位置。": "Neither panel stays on top. Unlock, drag the empty part of the left sidebar, then fix its position.",
   "固定位置": "Fix position",
   "解锁位置": "Unlock position",
   "位置已固定": "Position fixed",

@@ -4,9 +4,9 @@ const {panelBounds}=require('../src/window-layout.cjs');
 const {DEFAULT_SETTINGS,validateState,emptyState,validateSettings}=require('../src/domain.cjs');
 test('top right docking respects work area, reserved space and negative monitor origins',()=>{
  const area={x:-1920,y:40,width:1920,height:1040};
- assert.deepEqual(panelBounds(DEFAULT_SETTINGS,area,area),{x:-904,y:64,width:760,height:540});
- const inset=panelBounds({...DEFAULT_SETTINGS,desktopInset:240},area,area);assert.equal(inset.x,-1024);
- const small=panelBounds({...DEFAULT_SETTINGS,compactMode:true},area,area);assert.equal(small.x,-534);assert.equal(small.y,64);
+ assert.deepEqual(panelBounds(DEFAULT_SETTINGS,area,area),{x:-760,y:40,width:760,height:540});
+ const inset=panelBounds({...DEFAULT_SETTINGS,desktopInset:240},area,area);assert.equal(inset.x,-1000);
+ const small=panelBounds({...DEFAULT_SETTINGS,compactMode:true},area,area);assert.equal(small.x,-390);assert.equal(small.y,40);
 });
 test('small displays and removed monitors keep the panel within the available area',()=>{
  const area={x:10,y:20,width:600,height:400};

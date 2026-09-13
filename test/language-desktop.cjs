@@ -33,7 +33,7 @@ async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await
  assert.match(await js('document.querySelector(".month-heading").textContent'),/[A-Za-z]/);
  if(runtime.viewState().native.unlockShortcutRegistered || runtime.viewState().native.trayAvailable){
    await call('window:lock',{locked:true});
-   assert.equal(await js('document.querySelector("#position-status").textContent'),'Mouse clicks pass through');
+   assert.equal(await js('document.querySelector("#app").getAttribute("aria-label")'),'Mouse clicks pass through');
    await call('window:lock',{locked:false});
  }
  await js(`document.querySelector('[data-edit="${id}"]').click()`);
