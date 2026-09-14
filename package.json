@@ -1,7 +1,7 @@
 {
   "name": "rixu-desktop",
   "productName": "日序",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "desktopName": "io.rixu.desktop",
   "private": true,
   "description": "日序：今天、本周、四象限与随手记录",
@@ -36,5 +36,8 @@
     "type": "git",
     "url": "https://github.com/asoming/rixu.git"
   },
-  "homepage": "https://github.com/asoming/rixu"
+  "homepage": "https://github.com/asoming/rixu",
+  "dependencies": {
+    "tar": "7.5.22"
+  }
 }

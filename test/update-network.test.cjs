@@ -1,0 +1,8 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),{EventEmitter}=require('node:events'),{PassThrough}=require('node:stream');
+const {requestAsset}=require('../src/update-network.cjs');
+const url='https://github.com/asoming/rixu/releases/download/v1.0.7/SHA256SUMS.txt';
+function fixture({length='3',status=200,redirect}={}){const req=new EventEmitter();req.abort=()=>{};req.followRedirect=()=>{req.followed=true;};req.end=()=>queueMicrotask(()=>{if(redirect){req.emit('redirect',302,'GET',redirect);return;}const res=new PassThrough();res.statusCode=status;res.headers={'content-length':length};req.emit('response',res);if(!res.destroyed)res.end(Buffer.from('abc'));});return {net:{request:()=>req},req};}
+test('Electron scalar and array content lengths retain all digits and bytes',async()=>{for(const length of ['123',['123']]){const f=fixture({length});const response=await requestAsset(f.net,url);assert.equal(response.size,123);let bytes='';for await(const c of response.body)bytes+=c;assert.equal(bytes,'abc');}});
+test('HTTP errors and untrusted redirects fail without unhandled stream errors',async()=>{const f=fixture({status:404});await assert.rejects(requestAsset(f.net,url),/无法下载/);const r=fixture({redirect:'https://untrusted.example/package'});await assert.rejects(requestAsset(r.net,url),/地址无效/);assert.equal(r.req.followed,undefined);});
+test('abort before request rejects without starting a download',async()=>{const f=fixture(),controller=new AbortController();controller.abort();await assert.rejects(requestAsset(f.net,url,controller.signal),/取消/);});

@@ -275,9 +275,18 @@
   function renderUpdateStatus() {
     const update = state?.updates;
     if (!update) return;
-    $('#check-updates').disabled = update.status === 'checking';
-    $('#settings-download-update').hidden = update.status !== 'available';
-    $('#update-status').textContent = update.status === 'checking' ? tr('正在连接 GitHub…') : update.status === 'available' ? tr`发现新版本 ${update.release.version}` : update.status === 'current' ? tr('当前已是最新正式版') : update.status === 'error' ? tr(update.error) : tr('仅检查日序的 GitHub 正式版本');
+    const d = update.download || {}, busy = ['downloading', 'verifying', 'preparing', 'installing'].includes(d.status);
+    $('#check-updates').disabled = update.status === 'checking' || busy;
+    for (const button of [$('#settings-download-update'), $('#download-update')]) {
+      button.hidden = update.status !== 'available' || busy || d.status === 'ready';
+      button.disabled = !!update.installReason;
+    }
+    const size = n => (n / 1024 / 1024).toFixed(1);
+    const status = d.status === 'downloading' ? tr('正在下载…') + (d.total ? ` ${Math.min(100, Math.floor(d.transferred / d.total * 100))}% · ${size(d.transferred)} / ${size(d.total)} MB` : '') : d.status === 'verifying' ? tr('正在校验更新包…') : d.status === 'preparing' ? tr('正在准备安装，请稍候…') : d.status === 'installing' ? tr('正在安装，即将重启…') : d.status === 'ready' ? tr('更新已下载，可以安装') + ` · ${d.version}` : '';
+    document.querySelectorAll('[data-update-transfer]').forEach(node => {
+      node.innerHTML = `<p role="status" aria-live="polite">${esc(status)}</p>${d.status === 'downloading' ? `<progress aria-label="${esc(tr('下载进度'))}" ${d.total ? `value="${d.transferred}" max="${d.total}"` : ''}></progress><button data-update-cancel>${tr('取消下载')}</button>` : ''}${d.error ? `<p role="alert">${esc(tr(d.error))}</p>` : ''}${d.status === 'ready' ? `<button class="primary" data-update-install>${tr('安装并重启')}</button>` : ''}`;
+    });
+    $('#update-status').textContent = update.status === 'available' && update.installReason ? tr(update.installReason) : update.status === 'checking' ? tr('正在连接 GitHub…') : update.status === 'available' ? tr`发现新版本 ${update.release.version}` : update.status === 'current' ? tr('当前已是最新正式版') : update.status === 'error' ? tr(update.error) : tr('仅检查日序的 GitHub 正式版本');
     if ($('#update-dialog').open && update.release) $('#update-versions').textContent = tr`当前 ${state.native.version} → 新版 ${update.release.version}`;
   }
   function tryShowUpdate(manual = false) {
@@ -286,11 +295,16 @@
     if (!manual && (!state.settings.autoUpdates || update.notifiedVersion === update.release.version || !panelActive || movingPointer !== null || document.querySelector('dialog[open]'))) return;
     $('#update-versions').textContent = tr`当前 ${state.native.version} → 新版 ${update.release.version}`;
     state = { ...state, updates: { ...update, notifiedVersion: update.release.version } };
-    $('#update-dialog').showModal();
+    $('#update-dialog').showModal(); renderUpdateStatus();
     call('updates:acknowledge', { version: update.release.version }).catch(error);
   }
   $('#check-updates').onclick = action(async () => { const updates = await call('updates:check'); state = { ...state, updates }; renderUpdateStatus(); tryShowUpdate(true); });
-  $('#download-update').onclick = $('#settings-download-update').onclick = action(() => call('updates:open'));
+  $('#download-update').onclick = $('#settings-download-update').onclick = action(() => call('updates:download'));
+  document.addEventListener('click', action(async event => {
+    if (event.target.closest('[data-update-cancel]')) await call('updates:cancel');
+    if (event.target.closest('[data-update-notes]')) await call('updates:open');
+    if (event.target.closest('[data-update-install]') && await closeEditor()) await call('updates:install');
+  }));
   $('#dismiss-update').onclick = () => $('#update-dialog').close();
   document.addEventListener('close', () => tryShowUpdate(), true);
 

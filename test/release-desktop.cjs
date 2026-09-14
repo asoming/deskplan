@@ -13,7 +13,7 @@ seed.create({title:'收集秋天的旅行灵感',level:3});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){for(let i=0;i<120;i++){if(await fn())return;await sleep(50);}throw Error('Timeout: '+label);}
 (async()=>{
  let updateResponse={tag_name:'v9.8.7',draft:false,prerelease:false};
- const runtime=await require('../src/main.cjs').start({updateFetch:async()=>{if(updateResponse instanceof Error)throw updateResponse;return {ok:true,json:async()=>updateResponse};}}),win=runtime.window,s=runtime.store;win.show();
+ const runtime=await require('../src/main.cjs').start({...require('./update-flow-checks.cjs').options,updateFetch:async()=>{if(updateResponse instanceof Error)throw updateResponse;return {ok:true,json:async()=>updateResponse};}}),win=runtime.window,s=runtime.store;win.show();
  const js=code=>win.webContents.executeJavaScript(code,true),call=(name,payload)=>js(`window.fourfold.call(${JSON.stringify(name)},${JSON.stringify(payload)})`);
  await until(()=>js('document.querySelectorAll(".zone").length===4'),'board');
  await require('./window-desktop-checks.cjs')(runtime,js,call);
@@ -25,6 +25,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  await call('status',{id:a,action:'complete'});const next=s.state.tasks.find(t=>t.previousOccurrenceId===a);assert.ok(next);assert.equal(next.checklist[0].done,false);
  await call('undo');assert.equal(s.state.tasks.length,4);
  await require('./controls-update-checks.cjs')(runtime,js,call,value=>{updateResponse=value;});
+ await require('./update-flow-checks.cjs').check(runtime,js,call,value=>{updateResponse=value;});
  await require('./attachment-drop-checks.cjs')(runtime,js,call);
  await require('./readability-checks.cjs')(runtime,js,call);
  await call('settings',{transparency:100,textTransparency:0});
@@ -34,6 +35,6 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){
  const artifacts=process.env.RIXU_ARTIFACTS_DIR||path.join(directory,'artifacts');fs.mkdirSync(artifacts,{recursive:true});await sleep(200);
  fs.writeFileSync(path.join(artifacts,'desktop-blend.png'),(await win.webContents.capturePage()).toPNG());
  await call('settings',{view:'today'});await sleep(150);fs.writeFileSync(path.join(artifacts,'today.png'),(await win.webContents.capturePage()).toPNG());
- const report={passed:true,platform:process.platform,arch:process.arch,version:runtime.viewState().native.version,checks:['desktop layer stays below another window after focus and raise requests','real Linux mouse and keyboard input above a desktop icon surface at 100% transparency','native Xdnd file and directory transfers with pointer hit testing','layer retained after hide/show','top-right docking and reserved desktop margin','fixed position retains task interaction','manual placement preserved across settings and compact mode','main and mini panels never topmost','background check preserves another window focus','translated accessible left icon rail without logo','renderer loaded','native task editor attachment drops for drafts and existing tasks','desktop blend','checklist editing and persistence','recurrence completion','recurrence undo','removed mouse-through and window buttons','two-button mini rail and context menu','GitHub update UI with deferred notification and manual retry','transparent surfaces/readable text','exact foreground opacity and sidebar hover reveal'],artifacts};
+ const report={passed:true,platform:process.platform,arch:process.arch,version:runtime.viewState().native.version,checks:['desktop layer stays below another window after focus and raise requests','real Linux mouse and keyboard input above a desktop icon surface at 100% transparency','native Xdnd file and directory transfers with pointer hit testing','layer retained after hide/show','top-right docking and reserved desktop margin','fixed position retains task interaction','manual placement preserved across settings and compact mode','main and mini panels never topmost','background check preserves another window focus','translated accessible left icon rail without logo','renderer loaded','native task editor attachment drops for drafts and existing tasks','desktop blend','checklist editing and persistence','recurrence completion','recurrence undo','removed mouse-through and window buttons','two-button mini rail and context menu','GitHub update UI with deferred notification and manual retry','in-app download progress, cancellation, retry, install failure recovery, backup and explicit install','transparent surfaces/readable text','exact foreground opacity and sidebar hover reveal'],artifacts};
  fs.writeFileSync(path.join(artifacts,'desktop-test.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));app.quit();
 })().catch(e=>{console.error(e);app.exit(1);});

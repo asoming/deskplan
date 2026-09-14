@@ -4,6 +4,7 @@ const root=path.resolve(__dirname,'..'),dist=path.join(root,'dist'),version=requ
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'rixu-install-')),evidence={platform:process.platform,arch:process.arch,version,checks:[]};
 const run=(cmd,args,options={})=>execFileSync(cmd,args,{timeout:120000,...options});
 const smoke=binary=>run(process.execPath,[path.join(__dirname,'package-smoke.cjs'),binary],{stdio:'inherit'});
+(async()=>{
 if(process.platform==='linux'){
  const deb=path.join(dist,`Rixu-${version}-linux-x64.deb`);
  assert.equal(run('dpkg-deb',['-f',deb,'Version']).toString().trim(),version);
@@ -13,18 +14,21 @@ if(process.platform==='linux'){
  const binary=path.join(dir,'opt','日序','rixu');
  if(process.env.CI){const helper=path.join(path.dirname(binary),'chrome-sandbox');run('sudo',['chown','root:root',helper]);run('sudo',['chmod','4755',helper]);}
  smoke(binary);run('tar',['-tzf',path.join(dist,`Rixu-${version}-linux-x64.tar.gz`)]);
+ evidence.checks.push(await require('./test-update-install.cjs').test(binary,path.join(dist,`Rixu-${version}-linux-x64.tar.gz`),'local'));
  evidence.checks.push('deb metadata','desktop association','standard icon sizes','extracted deb application','tar archive');
 }else if(process.platform==='win32'){
  const installer=path.join(dist,`Rixu-${version}-windows-x64-setup.exe`),destination=path.join(dir,'installed');
  run(installer,['/S',`/D=${destination}`]);
  const binary=path.join(destination,'rixu.exe');assert.ok(fs.existsSync(binary));smoke(binary);
+ evidence.checks.push(await require('./test-update-install.cjs').test(binary,installer,'nsis'));
  evidence.checks.push('NSIS silent installation','installed application');
 }else if(process.platform==='darwin'){
  const dmg=path.join(dist,`Rixu-${version}-mac-${process.arch}.dmg`),mount=path.join(dir,'mount');fs.mkdirSync(mount);
  run('hdiutil',['attach',dmg,'-nobrowse','-readonly','-mountpoint',mount]);
  try{
    const bundle=path.join(mount,'日序.app');run('codesign',['--verify','--deep','--strict',bundle]);
-   const binDir=path.join(bundle,'Contents','MacOS');smoke(path.join(binDir,fs.readdirSync(binDir).find(n=>!n.startsWith('.'))));
+   const binDir=path.join(bundle,'Contents','MacOS'),binary=path.join(binDir,fs.readdirSync(binDir).find(n=>!n.startsWith('.')));smoke(binary);
+   evidence.checks.push(await require('./test-update-install.cjs').test(binary,dmg,'mac'));
  }finally{run('hdiutil',['detach',mount]);}
  run('unzip',['-tqq',path.join(dist,`Rixu-${version}-mac-${process.arch}.zip`)]);
  evidence.checks.push('DMG mount','code signature integrity (not publisher trust/notarization)','mounted application','ZIP integrity');
@@ -32,3 +36,5 @@ if(process.platform==='linux'){
 evidence.passed=true;
 if(process.env.RIXU_ARTIFACTS_DIR){fs.mkdirSync(process.env.RIXU_ARTIFACTS_DIR,{recursive:true});fs.writeFileSync(path.join(process.env.RIXU_ARTIFACTS_DIR,'distribution-test.json'),JSON.stringify(evidence,null,2));}
 console.log(JSON.stringify(evidence));
+
+})().catch(error=>{console.error(error);process.exitCode=1;});

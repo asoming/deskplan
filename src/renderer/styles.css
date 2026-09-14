@@ -66,3 +66,6 @@ body:not(.position-fixed) .zone-heading,body:not(.position-fixed) .empty-zone{cu
 .clear-desktop :is(.workspace,.tool-rail,#compact-panel,.statusbar){--ink:#f4f7f5;--muted:#e1e8e3;--accent:#bee2d3;--red:#ff8f88;--hot:#efc16c;--warm:#e4cf87;--calm:#a6cfb6;color:var(--ink)}
 .clear-desktop .zone[data-level="2"],.clear-desktop [data-priority="2"]{--zone-tone:#a7d8ee}
 @media(prefers-reduced-motion:reduce){.quiet-controls .tool-rail{transition:none}}
+
+.update-transfer progress { width: 100%; height: 8px; accent-color: var(--accent); margin-bottom: 12px; }
+.update-transfer p:empty { display: none; }

@@ -41,13 +41,13 @@
 
 | 系统 | 文件 |
 | --- | --- |
-| Debian / Ubuntu，x64 | `Rixu-1.0.6-linux-x64.deb` |
-| 其他 Linux，x64 | `Rixu-1.0.6-linux-x64.tar.gz` |
-| Windows，x64 | `Rixu-1.0.6-windows-x64-setup.exe` |
-| macOS，Apple Silicon | `Rixu-1.0.6-mac-arm64.dmg` 或 `.zip` |
-| macOS，Intel | `Rixu-1.0.6-mac-x64.dmg` 或 `.zip` |
+| Debian / Ubuntu，x64 | `Rixu-1.0.7-linux-x64.deb` |
+| 其他 Linux，x64 | `Rixu-1.0.7-linux-x64.tar.gz` |
+| Windows，x64 | `Rixu-1.0.7-windows-x64-setup.exe` |
+| macOS，Apple Silicon | `Rixu-1.0.7-mac-arm64.dmg` 或 `.zip` |
+| macOS，Intel | `Rixu-1.0.7-mac-x64.dmg` 或 `.zip` |
 
-Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.6-linux-x64.deb`。
+Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.7-linux-x64.deb`。
 
 发行说明会记录实际构建、测试及签名状态。本项目尚未配置开发者代码签名证书：Windows 安装程序未做 Authenticode 签名，macOS 使用临时签名，未进行 Apple 公证。首次打开可能受到系统检查；这与安装包能否构建、应用能否运行是不同的验证项。不要关闭系统的全局安全保护。
 
@@ -111,3 +111,9 @@ npm run test:package   # 运行刚打包的 App
 移除鼠标穿透功能、快捷键以及最小化/关闭按钮。解除固定后，拖动空白处或象限标题移动；小窗只有 ＋ 和展开两个按钮，固定位置、设置和退出在右键菜单。
 
 启动后与运行中每 6 小时检查 GitHub 正式版本。新版本提示在用户回到日序且没有编辑对话框时出现，同一版本自动提示一次；设置 → 软件更新可随时检测、重试或关闭自动检查。仅提供版本提示和 GitHub 下载入口，不自动安装、不上传任务与文件。API 限流时使用 GitHub 官方最新版链接备用检测。
+
+## 1.0.7 应用内下载与安装
+
+设置 → 软件更新 → 检测更新 → 下载更新。显示下载进度，支持取消和重试；SHA256 校验通过后出现「安装并重启」。也可稍后安装，已下载的更新包会保留到下次启动。安装前额外备份任务与设置，随手记草稿也会保留。不会后台自动下载、安装或强制重启。
+
+Linux 用户目录安装可直接替换并保留旧版本；系统 deb 安装通过系统授权安装。Windows 使用原有安装目录更新；macOS 从已安装的 Applications 应用更新并验证签名完整性。安装目录需要可写；不可写时可从 GitHub 下载手动安装。macOS 临时签名不等于开发者身份认证或公证。1.0.6 及更早版本需要手动安装一次本版本，之后可使用应用内更新。

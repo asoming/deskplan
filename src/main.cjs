@@ -24,17 +24,21 @@ if (process.platform === 'linux' || (process.platform === 'darwin' && process.ar
 const dataDirectory = process.env.RIXU_DATA_DIR || process.env.FOURFOLD_DATA_DIR;
 if (dataDirectory) app.setPath('userData', path.resolve(dataDirectory));
 const isTest = process.env.RIXU_TEST === '1' || process.env.FOURFOLD_TEST === '1';
+const { UpdateDownload } = require('./update-download.cjs');
+const { requestAsset } = require('./update-network.cjs');
+const { installTarget, prepareInstall, launchInstall } = require('./update-installer.cjs');
 const { UpdateChecker } = require('./updates.cjs');
 const { latestReleaseURL } = require('./github-latest.cjs');
 const { panelBounds, sameBounds } = require('./window-layout.cjs');
 const indexFile = path.join(__dirname, 'renderer', 'index.html');
-let updater, updateTimer, windowDrag;
+let updater, downloader, updateTarget, installHook, updateTimer, windowDrag;
+const updateState = () => ({ ...updater?.snapshot(), download: downloader?.snapshot(), installReason: updateTarget?.reason || '' });
 let quickWin, quickRegistered = false, registeredAccelerator = null, normalBounds, fixedBounds;
 let win, tray, store, quitting = false, timer, lastCheck = Date.now(), lastLevels = new Map(), moveTimer;
 
 function viewState() {
   return {
-    ...store.snapshot(), updates: updater?.snapshot(), canUndo: store.history.length > 0, recoveryNotice: tr(store.recoveryNotice),
+    ...store.snapshot(), updates: updateState(), canUndo: store.history.length > 0, recoveryNotice: tr(store.recoveryNotice),
     native: { panelActive: !!win?.isFocused(), platform: process.platform, notificationsSupported: Notification.isSupported(), trayAvailable: !!tray,
       quickShortcutRegistered: quickRegistered, version: require('../package.json').version,
       autoStartSupported: process.platform !== 'linux' || app.isPackaged },
@@ -122,7 +126,7 @@ function createTray() {
   } catch (error) { console.warn('Tray unavailable:', error.message); tray = null; }
 }
 function clockCheck() {
-  if (!isTest && store.state.settings.autoUpdates && updater.due()) updater.check();
+  if (!isTest && store.state.settings.autoUpdates && !downloader.busy() && updater.due()) updater.check();
   const now = Date.now();
   try {
     const moved = store.state.tasks.filter(t => t.status === 'active' && t.level === 1 && effectiveLevel(t, now) === 0 && lastLevels.get(t.id) === 1);
@@ -201,7 +205,10 @@ function registerIPC() {
     current: async ({ id }) => { store.startCurrent(id); broadcast(); },
     review: async ({ id, choice, due }) => { store.review(id, choice, due); broadcast(); },
     'window:move': async ({ phase }) => moveWindow(phase),
-    'updates:check': async () => updater.check(),
+    'updates:check': async () => { if (!downloader.busy()) await updater.check(); return updateState(); },
+    'updates:download': async () => { if (updateTarget.reason) throw Error(tr(updateTarget.reason)); downloader.download(updater.state.release).catch(reportError); return updateState(); },
+    'updates:cancel': async () => downloader.cancel(),
+    'updates:install': async () => installUpdate(),
     'updates:acknowledge': async ({ version }) => updater.acknowledge(version),
     'updates:open': async () => { if (updater.state.release) await shell.openExternal(updater.state.release.url); },
     'window:compact': async ({ enabled }) => setCompact(!!enabled),
@@ -272,12 +279,37 @@ function registerIPC() {
   });
 }
 
+async function installUpdate() {
+  if (downloader.state.status !== 'ready') return;
+  downloader.change({ status: 'preparing', error: '' });
+  let plan;
+  try {
+    const candidate = await downloader.verifiedFile();
+    plan = installHook ? candidate : await prepareInstall({ candidate, target: updateTarget, directory: downloader.directory });
+    store.export(path.join(store.backupDirectory, `before-update-${Date.now()}.json`));
+    if (installHook) { await installHook(plan); downloader.change({ status: 'ready' }); return; }
+    await launchInstall({ plan, directory: downloader.directory });
+    downloader.change({ status: 'installing' });
+    app.quit();
+  } catch (error) {
+    if (plan?.stage) { try { fs.rmSync(plan.stage, { recursive: true, force: true }); } catch {} }
+    downloader.change({ status: downloader.ready ? 'ready' : 'error', error: error.code === 'EACCES' ? '没有安装目录的写入权限，请从 GitHub 下载后手动安装' : '安装失败，请重试' });
+    console.error('Update installation:', error.message);
+  }
+}
+
 async function start(options = {}) {
   if (!isTest && !app.requestSingleInstanceLock()) { app.quit(); return; }
   app.on('second-instance', () => showWindow());
   await app.whenReady();
   store = new Store(app.getPath('userData'));
   updater = new UpdateChecker({ version: require('../package.json').version, fetch: isTest && options.updateFetch ? options.updateFetch : (...args) => net.fetch(...args), latestURL: () => latestReleaseURL(net), cacheFile: path.join(app.getPath('userData'), 'updates.json'), onChange: broadcast });
+  updateTarget = isTest && options.updateTarget ? options.updateTarget : installTarget({ packaged: app.isPackaged });
+  installHook = isTest ? options.updateInstall : null;
+  downloader = new UpdateDownload({ directory: path.join(app.getPath('userData'), 'updates'), version: require('../package.json').version, kind: updateTarget.kind, arch: isTest && options.updateTarget?.kind === 'local' ? 'x64' : process.arch, request: isTest && options.updateRequest ? options.updateRequest : (url, signal) => requestAsset(net, url, signal), onChange: broadcast });
+  await downloader.restore();
+  const resultFile = path.join(downloader.directory, 'install-result.json');
+  try { const result = JSON.parse(fs.readFileSync(resultFile, 'utf8')); if (!result.ok) downloader.change({ error: result.error || '安装失败，请重试' }); fs.rmSync(resultFile); } catch {}
   setLanguage(store.state.settings.language);
   nativeTheme.themeSource = store.state.settings.theme;
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
@@ -328,10 +360,10 @@ async function start(options = {}) {
   await win.loadFile(indexFile);
   if (!isTest && (!process.argv.includes('--hidden') || !tray)) win.show();
   if (!isTest) updateTimer = setTimeout(() => { if (store.state.settings.autoUpdates) updater.check(); }, 20000);
-  return { window: win, store, clockCheck, viewState, showQuickCapture, updater, panelMenu, getQuickWindow: () => quickWin };
+  return { window: win, store, downloader, clockCheck, viewState, showQuickCapture, updater, panelMenu, getQuickWindow: () => quickWin };
 }
 
-app.on('will-quit', () => globalShortcut.unregisterAll());
+app.on('will-quit', () => { if (app.isReady()) globalShortcut.unregisterAll(); });
 app.on('before-quit', () => {
   quitting = true; clearTimeout(moveTimer); clearTimeout(updateTimer); clearInterval(timer);
   if (store && win && !win.isDestroyed() && !store.state.settings.compactMode) { try { store.saveBounds(win.getBounds()); } catch (e) { console.error('Window position was not saved:', e.message); } }

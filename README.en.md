@@ -41,13 +41,13 @@ Get the matching asset from [GitHub Releases](https://github.com/asoming/rixu/re
 
 | Platform | Asset |
 | --- | --- |
-| Debian / Ubuntu x64 | `Rixu-1.0.6-linux-x64.deb` |
-| Other Linux x64 | `Rixu-1.0.6-linux-x64.tar.gz` |
-| Windows x64 | `Rixu-1.0.6-windows-x64-setup.exe` |
-| macOS Apple Silicon | `Rixu-1.0.6-mac-arm64.dmg` or `.zip` |
-| macOS Intel | `Rixu-1.0.6-mac-x64.dmg` or `.zip` |
+| Debian / Ubuntu x64 | `Rixu-1.0.7-linux-x64.deb` |
+| Other Linux x64 | `Rixu-1.0.7-linux-x64.tar.gz` |
+| Windows x64 | `Rixu-1.0.7-windows-x64-setup.exe` |
+| macOS Apple Silicon | `Rixu-1.0.7-mac-arm64.dmg` or `.zip` |
+| macOS Intel | `Rixu-1.0.7-mac-x64.dmg` or `.zip` |
 
-Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.6-linux-x64.deb`.
+Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.7-linux-x64.deb`.
 
 Release notes record actual build, test and signing status. Developer signing certificates are not configured: Windows builds are not Authenticode-signed; macOS builds are ad-hoc signed and not Apple-notarized. Operating-system checks may appear on first launch. Do not disable global operating-system security protections.
 
@@ -109,3 +109,9 @@ Fixes the Linux desktop icon surface intercepting planner clicks and file drops.
 Removes mouse-through and its shortcut, plus minimize and close buttons. Unlock position and drag empty panel areas or quadrant headings. Mini mode has only New task and Expand; right-click for position, settings and Quit.
 
 Checks stable GitHub releases after startup and every six hours. An update dialog appears when you return to Rixu and no editor dialog is open, once per version. Settings → Software updates supports manual checks, retry and disabling automatic checks. It opens GitHub for release notes and installers; it does not install automatically or upload tasks/files. GitHub's official latest-release link provides a fallback when the public API is rate limited.
+
+## 1.0.7 Download and install updates in the app
+
+Settings → Software updates → Check for updates → Download update. Downloads show progress and support cancellation and retry. After SHA256 verification, choose Install and restart or install later; downloaded packages survive app restarts. Tasks and settings receive an additional backup before installation, and Quick Capture drafts are retained. Rixu never downloads, installs or restarts automatically.
+
+Writable user-local Linux installations are replaced with the previous runtime retained; system deb installations request system authorization. Windows updates the existing installation directory. macOS updates an installed Applications bundle and verifies signature integrity. The installation folder must be writable; otherwise download from GitHub and install manually. Ad-hoc macOS signatures do not establish publisher identity or notarization. Versions 1.0.6 and earlier need a one-time manual installation of this release before they can update in the app.
