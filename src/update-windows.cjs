@@ -4,7 +4,7 @@ function windowsCommand(config) {
   const literal = config.replace(/'/g, "''");
   return `
 $ErrorActionPreference = 'Stop'
-$plan = Get-Content -LiteralPath '${literal}' -Raw | ConvertFrom-Json
+$plan = Get-Content -Encoding UTF8 -LiteralPath '${literal}' -Raw | ConvertFrom-Json
 [Console]::Out.WriteLine('READY')
 [Console]::Out.Flush()
 try {

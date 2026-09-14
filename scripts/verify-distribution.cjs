@@ -23,13 +23,14 @@ if(process.platform==='linux'){
  evidence.checks.push(await require('./test-update-install.cjs').test(binary,installer,'nsis'));
  evidence.checks.push('NSIS silent installation','installed application');
 }else if(process.platform==='darwin'){
- const dmg=path.join(dist,`Rixu-${version}-mac-${process.arch}.dmg`),mount=path.join(dir,'mount');fs.mkdirSync(mount);
+ const dmg=path.join(dist,`Rixu-${version}-mac-${process.arch}.dmg`),mount=path.join(dir,'mount');fs.mkdirSync(mount);let sourceBinary;
  run('hdiutil',['attach',dmg,'-nobrowse','-readonly','-mountpoint',mount]);
  try{
    const bundle=path.join(mount,'日序.app');run('codesign',['--verify','--deep','--strict',bundle]);
    const binDir=path.join(bundle,'Contents','MacOS'),binary=path.join(binDir,fs.readdirSync(binDir).find(n=>!n.startsWith('.')));smoke(binary);
-   evidence.checks.push(await require('./test-update-install.cjs').test(binary,dmg,'mac'));
+   const source=path.join(dir,'source.app');fs.cpSync(bundle,source,{recursive:true,verbatimSymlinks:true});sourceBinary=path.join(source,'Contents','MacOS',path.basename(binary));
  }finally{run('hdiutil',['detach',mount]);}
+ evidence.checks.push(await require('./test-update-install.cjs').test(sourceBinary,dmg,'mac'));
  run('unzip',['-tqq',path.join(dist,`Rixu-${version}-mac-${process.arch}.zip`)]);
  evidence.checks.push('DMG mount','code signature integrity (not publisher trust/notarization)','mounted application','ZIP integrity');
 }
