@@ -6,7 +6,7 @@ const {trustedAssetURL}=require('../src/update-network.cjs');
 const body=Buffer.from('fixture installer'),sum=createHash('sha256').update(body).digest('hex');
 function fixture(t, options={}) {
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'rixu-download-test-'));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));
- const request=async url=>({size:url.endsWith('.txt')?0:body.length,body:Readable.from([url.endsWith('.txt')?Buffer.from(`${sum}  ${assetName('9.8.7','local')}\n`):body])});
+ const request=async url=>({size:url.endsWith('.txt')?0:body.length,body:Readable.from([url.endsWith('.txt')?Buffer.from(`${sum}  ${assetName('9.8.7','local','x64')}\n`):body])});
  return new UpdateDownload({directory,version:'1.0.6',kind:'local',arch:'x64',request,...options});
 }
 test('update packages match platform and architecture; remote paths stay on GitHub release assets',()=>{
