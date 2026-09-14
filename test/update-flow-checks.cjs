@@ -18,6 +18,7 @@ exports.check=async(runtime,js,call,setResponse)=>{
  assert.equal(runtime.downloader.state.error,'下载已取消');assert.equal(installed,0);
  await js('document.querySelector("#settings-download-update").click()');await until(()=>runtime.downloader.state.status==='ready');
  assert.match(await js('document.querySelector("[data-update-transfer]").textContent'),/Install and restart/);
+ await js('document.querySelector("#update-status").scrollIntoView({block:"end"})');
  if(process.env.RIXU_ARTIFACTS_DIR)fs.writeFileSync(require('node:path').join(process.env.RIXU_ARTIFACTS_DIR,'update-ready.png'),(await runtime.window.webContents.capturePage()).toPNG());
  await js('document.querySelector("#settings-dialog").close()');await sleep(50);assert.equal(installed,0,'download does not install automatically');
  const before=JSON.stringify(runtime.store.state.tasks);failInstall=true;

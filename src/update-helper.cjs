@@ -21,7 +21,7 @@ async function apply(plan, options = {}) {
   await (options.wait || waitForExit)(plan.parentPid);
   if (plan.kind === 'deb') {
     try {
-      await new Promise((resolve, reject) => execFile('pkexec', ['dpkg', '-i', plan.file], error => error ? reject(Error('安装被取消或失败，请重试')) : resolve()));
+      await new Promise((resolve, reject) => (options.execFile || execFile)('pkexec', ['dpkg', '-i', plan.file], error => error ? reject(Error('安装被取消或失败，请重试')) : resolve()));
       fs.writeFileSync(plan.result, JSON.stringify({ ok: true }));
     } catch (error) {
       fs.writeFileSync(plan.result, JSON.stringify({ ok: false, error: error.message }));

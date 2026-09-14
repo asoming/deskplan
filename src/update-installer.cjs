@@ -6,15 +6,16 @@ const { promisify } = require('node:util');
 const run = promisify(execFile);
 const { atomicWrite } = require('./store.cjs');
 function installTarget({ platform = process.platform, execPath = process.execPath, packaged = false } = {}) {
+  const paths = platform === 'win32' ? path.win32 : path.posix;
   if (!packaged) return { kind: 'unsupported', reason: '开发模式不安装更新' };
-  if (platform === 'win32') return { kind: 'nsis', root: path.dirname(execPath), executable: execPath };
+  if (platform === 'win32') return { kind: 'nsis', root: paths.dirname(execPath), executable: execPath };
   if (platform === 'darwin') {
-    const root = path.resolve(execPath, '../../..');
+    const root = paths.resolve(execPath, '../../..');
     if (!root.endsWith('.app') || root.startsWith('/Volumes/')) return { kind: 'unsupported', reason: '请先将日序移到应用程序文件夹再更新' };
     return { kind: 'mac', root, executable: execPath };
   }
   if (platform === 'linux') {
-    const root = path.dirname(execPath);
+    const root = paths.dirname(execPath);
     try { fs.accessSync(root, fs.constants.W_OK); fs.accessSync(path.dirname(root), fs.constants.W_OK); return { kind: 'local', root, executable: execPath }; }
     catch { return { kind: 'deb', root, executable: execPath }; }
   }
