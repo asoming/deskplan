@@ -41,13 +41,13 @@ Get the matching asset from [GitHub Releases](https://github.com/asoming/rixu/re
 
 | Platform | Asset |
 | --- | --- |
-| Debian / Ubuntu x64 | `Rixu-1.0.7-linux-x64.deb` |
-| Other Linux x64 | `Rixu-1.0.7-linux-x64.tar.gz` |
-| Windows x64 | `Rixu-1.0.7-windows-x64-setup.exe` |
-| macOS Apple Silicon | `Rixu-1.0.7-mac-arm64.dmg` or `.zip` |
-| macOS Intel | `Rixu-1.0.7-mac-x64.dmg` or `.zip` |
+| Debian / Ubuntu x64 | `Rixu-1.0.8-linux-x64.deb` |
+| Other Linux x64 | `Rixu-1.0.8-linux-x64.tar.gz` |
+| Windows x64 | `Rixu-1.0.8-windows-x64-setup.exe` |
+| macOS Apple Silicon | `Rixu-1.0.8-mac-arm64.dmg` or `.zip` |
+| macOS Intel | `Rixu-1.0.8-mac-x64.dmg` or `.zip` |
 
-Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.7-linux-x64.deb`.
+Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.8-linux-x64.deb`.
 
 Release notes record actual build, test and signing status. Developer signing certificates are not configured: Windows builds are not Authenticode-signed; macOS builds are ad-hoc signed and not Apple-notarized. Operating-system checks may appear on first launch. Do not disable global operating-system security protections.
 
@@ -115,3 +115,9 @@ Checks stable GitHub releases after startup and every six hours. An update dialo
 Settings → Software updates → Check for updates → Download update. Downloads show progress and support cancellation and retry. After SHA256 verification, choose Install and restart or install later; downloaded packages survive app restarts. Tasks and settings receive an additional backup before installation, and Quick Capture drafts are retained. Rixu never downloads, installs or restarts automatically.
 
 Writable user-local Linux installations are replaced with the previous runtime retained; system deb installations request system authorization. Windows updates the existing installation directory. macOS updates an installed Applications bundle and verifies signature integrity. The installation folder must be writable; otherwise download from GitHub and install manually. Ad-hoc macOS signatures do not establish publisher identity or notarization. Versions 1.0.6 and earlier need a one-time manual installation of this release before they can update in the app.
+
+## 1.0.8 Checklists on task cards
+
+Task cards now show checklist steps with checkboxes that save immediately. Available in Quadrants, Today, Week, Inbox and mini mode. The first three steps appear by default; expand to see the rest. Long text wraps, progress stays in sync with task details, and changes support Undo. Finishing every step leaves the parent task active until you complete it yourself.
+
+Fixes cards previously showing only a count such as “0/2” without the actual steps. Chinese/English labels and independent text transparency are supported.

@@ -74,6 +74,16 @@ class Store {
   task(state, id) { const t = state.tasks.find(t => t.id === id); if (!t) throw new Error('找不到这件任务'); return t; }
   create(input, files = []) { return this.mutate(s => { const task = createTask(input); task.files = files.map(f => ({ id: randomUUID(), ...f })); s.tasks.push(task); return task.id; }); }
   update(id, patch) { this.mutate(s => { const index = s.tasks.findIndex(t => t.id === id); if (index < 0) throw new Error('任务不存在'); s.tasks[index] = patchTask(s.tasks[index], patch); }); }
+  setChecklistDone(id, itemId, done) {
+    this.mutate(s => {
+      const task = this.task(s, id);
+      if (task.status !== 'active') throw new Error('任务状态已变化，请刷新后重试');
+      const item = task.checklist.find(item => item.id === itemId);
+      if (!item || typeof done !== 'boolean') throw new Error('子清单内容或标识无效');
+      item.done = done;
+      task.updatedAt = new Date().toISOString();
+    });
+  }
   status(id, action) {
     this.mutate(s => {
       const task = this.task(s, id), now = new Date().toISOString();

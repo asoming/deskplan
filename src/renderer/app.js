@@ -17,6 +17,7 @@
   let panelActive = false;
   let state, now = Date.now(), month = new Date(new Date().getFullYear(), new Date().getMonth(), 1), selectedDay = '', draggedId = null;
   let draftChecklist = [];
+  const expandedChecklists = new Set();
   let repeatLabels = { daily: tr('每天'), weekdays: tr('工作日'), weekly: tr('每周'), monthly: tr('每月') };
   let editorSession = 0, pendingAttachments = 0;
   let editingId = null, editorInitial = '', draftFiles = [], availability = new Map(), toastTimer, busy = false;
@@ -37,6 +38,7 @@
     $('#text-transparency').value = value; $('#text-transparency-value').textContent = `${value}%`;
   }
   function receive(next) {
+    const focusedStep = document.activeElement?.matches('[data-card-step]') ? { taskId: document.activeElement.dataset.checkTask, itemId: document.activeElement.dataset.cardStep } : null;
     const languageChanged = !state || state.settings.language !== next.settings.language;
     state = next; panelActive = !!next.native.panelActive;
     setLanguage(state.settings.language);
@@ -69,6 +71,10 @@
     if ($('#settings-dialog').open) renderSettings();
     if ($('#task-dialog').open) renderAttachments();
     renderUpdateStatus(); tryShowUpdate();
+    if (focusedStep) {
+      const input = [...document.querySelectorAll('[data-card-step]')].find(el => el.dataset.checkTask === focusedStep.taskId && el.dataset.cardStep === focusedStep.itemId && el.getClientRects().length);
+      input?.focus({ preventScroll: true });
+    }
   }
   function renderBoard() {
     if (!state) return;
@@ -81,14 +87,20 @@
     document.querySelectorAll('.task-list').forEach((list, i) => { list.scrollTop = scroll[i] || 0; });
     $('#task-count').textContent = tr`${active.length} 件待办`;
   }
+  function checklistHTML(t) {
+    if (!t.checklist.length) return '';
+    const expanded = expandedChecklists.has(t.id);
+    const steps = t.checklist.map((item, index) => `<label class="card-step" draggable="true" ${index >= 3 && !expanded ? 'hidden' : ''}><input type="checkbox" data-check-task="${esc(t.id)}" data-card-step="${esc(item.id)}" ${item.done ? 'checked' : ''}><span>${esc(item.text)}</span></label>`).join('');
+    return `<div class="card-checklist" role="group" aria-label="${esc(tr('子清单'))}">${steps}${t.checklist.length > 3 ? `<button class="checklist-toggle" data-checklist-expand="${esc(t.id)}" aria-expanded="${expanded}">${esc(expanded ? tr('收起步骤') : tr`展开其余 ${t.checklist.length - 3} 步`)}</button>` : ''}</div>`;
+  }
   function taskHTML(t) {
     const auto = t.level === 1 && effectiveLevel(t, now) === 0;
-    return html`<article class="task" data-task="${esc(t.id)}" draggable="true" data-priority="${effectiveLevel(t, now)}" data-heat="${urgency(t, now)}" data-selected="${!!selectedDay && taskDay(t) === selectedDay}"><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-edit="${esc(t.id)}">${esc(t.title)}</button></div>${t.due || t.files.length || t.estimatedMinutes || t.repeat !== 'none' || t.checklist.length ? `<div class="task-meta">${t.estimatedMinutes ? html`<span>${t.estimatedMinutes} 分钟</span>` : ''}${t.repeat !== 'none' ? `<span class="repeat-tag">↻ ${repeatLabels[t.repeat]}</span>` : ''}${t.checklist.length ? `<span>☑ ${t.checklist.filter(i => i.done).length}/${t.checklist.length}</span>` : ''}<span class="due" title="${esc(fullDate(t.due))}">${remainingLabel(t, now, state.settings.language)}</span>${auto ? html('<span class="auto-label">自动移入</span>') : ''}${t.files.length ? `<span class="file-tag">${icon('clip')}<span>${esc(t.files[0].name)}${t.files.length > 1 ? ` +${t.files.length - 1}` : ''}</span></span>` : ''}</div>` : ''}<div class="task-tools"><button data-start="${esc(t.id)}" title="设为当前任务">${t.current ? tr('正在做') : tr('开始')}</button>${t.due && remainingHours(t, now) <= 0 ? html`<button data-review="${esc(t.id)}">处理到期</button>` : ''}<button data-today="${esc(t.id)}" title="安排今天做">今天做</button></div></article>`;
+    return html`<article class="task" data-task="${esc(t.id)}" draggable="true" data-priority="${effectiveLevel(t, now)}" data-heat="${urgency(t, now)}" data-selected="${!!selectedDay && taskDay(t) === selectedDay}"><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-edit="${esc(t.id)}">${esc(t.title)}</button></div>${t.due || t.files.length || t.estimatedMinutes || t.repeat !== 'none' || t.checklist.length ? `<div class="task-meta">${t.estimatedMinutes ? html`<span>${t.estimatedMinutes} 分钟</span>` : ''}${t.repeat !== 'none' ? `<span class="repeat-tag">↻ ${repeatLabels[t.repeat]}</span>` : ''}${t.checklist.length ? `<span>☑ ${t.checklist.filter(i => i.done).length}/${t.checklist.length}</span>` : ''}<span class="due" title="${esc(fullDate(t.due))}">${remainingLabel(t, now, state.settings.language)}</span>${auto ? html('<span class="auto-label">自动移入</span>') : ''}${t.files.length ? `<span class="file-tag">${icon('clip')}<span>${esc(t.files[0].name)}${t.files.length > 1 ? ` +${t.files.length - 1}` : ''}</span></span>` : ''}</div>` : ''}${checklistHTML(t)}<div class="task-tools"><button data-start="${esc(t.id)}" title="设为当前任务">${t.current ? tr('正在做') : tr('开始')}</button>${t.due && remainingHours(t, now) <= 0 ? html`<button data-review="${esc(t.id)}">处理到期</button>` : ''}<button data-today="${esc(t.id)}" title="安排今天做">今天做</button></div></article>`;
   }
   let weekOffset = 0, reviewingId = null;
   function planRow(t, top = false) {
     const today = dateKey(new Date(now));
-    return html`<article class="plan-task task" data-task="${esc(t.id)}" draggable="true" data-priority="${effectiveLevel(t, now)}" data-heat="${urgency(t, now)}"><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-edit="${esc(t.id)}">${esc(t.title)}</button>${!t.inbox ? `<button class="focus-star ${top ? 'chosen' : ''}" data-focus="${esc(t.id)}" title="${top ? tr('移出今天最重要的三件事') : tr('加入今天最重要的三件事')}" aria-label="${top ? tr('取消重要') : tr('标为重要')}">${top ? '★' : '☆'}</button>` : ''}</div><div class="task-meta">${t.repeat !== 'none' ? `<span>↻ ${repeatLabels[t.repeat]}</span>` : ''}${t.checklist.length ? `<span>☑ ${t.checklist.filter(i => i.done).length}/${t.checklist.length}</span>` : ''}<span>${t.estimatedMinutes ? tr`${t.estimatedMinutes} 分钟` : tr('未估时')}</span>${t.due ? `<span class="due" title="${esc(fullDate(t.due))}">${remainingLabel(t, now, state.settings.language)}</span>` : ''}${plannedDay(t) && plannedDay(t) < today ? html('<span>之前待办</span>') : ''}${t.files.length ? `<span>${icon('clip')} ${t.files.length}</span>` : ''}</div><div class="task-tools">${t.inbox ? html`<button data-today="${esc(t.id)}">安排今天</button><button data-edit="${esc(t.id)}">选择日期</button>` : `<button data-start="${esc(t.id)}">${t.current ? tr('正在做') : tr('开始')}</button>`}${t.due && remainingHours(t, now) <= 0 ? html`<button data-review="${esc(t.id)}">处理到期</button>` : ''}</div></article>`;
+    return html`<article class="plan-task task" data-task="${esc(t.id)}" draggable="true" data-priority="${effectiveLevel(t, now)}" data-heat="${urgency(t, now)}"><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-edit="${esc(t.id)}">${esc(t.title)}</button>${!t.inbox ? `<button class="focus-star ${top ? 'chosen' : ''}" data-focus="${esc(t.id)}" title="${top ? tr('移出今天最重要的三件事') : tr('加入今天最重要的三件事')}" aria-label="${top ? tr('取消重要') : tr('标为重要')}">${top ? '★' : '☆'}</button>` : ''}</div><div class="task-meta">${t.repeat !== 'none' ? `<span>↻ ${repeatLabels[t.repeat]}</span>` : ''}${t.checklist.length ? `<span>☑ ${t.checklist.filter(i => i.done).length}/${t.checklist.length}</span>` : ''}<span>${t.estimatedMinutes ? tr`${t.estimatedMinutes} 分钟` : tr('未估时')}</span>${t.due ? `<span class="due" title="${esc(fullDate(t.due))}">${remainingLabel(t, now, state.settings.language)}</span>` : ''}${plannedDay(t) && plannedDay(t) < today ? html('<span>之前待办</span>') : ''}${t.files.length ? `<span>${icon('clip')} ${t.files.length}</span>` : ''}</div>${checklistHTML(t)}<div class="task-tools">${t.inbox ? html`<button data-today="${esc(t.id)}">安排今天</button><button data-edit="${esc(t.id)}">选择日期</button>` : `<button data-start="${esc(t.id)}">${t.current ? tr('正在做') : tr('开始')}</button>`}${t.due && remainingHours(t, now) <= 0 ? html`<button data-review="${esc(t.id)}">处理到期</button>` : ''}</div></article>`;
   }
   function renderPlanner() {
     if (!state) return;
@@ -123,7 +135,7 @@
       const current = active.find(t => t.current);
       const queue = [current, ...top, ...other, ...active.filter(t => !t.inbox).sort((a,b) => effectiveLevel(a, now) - effectiveLevel(b, now) || byOrder(a,b))].filter(Boolean);
       const unique = [...new Map(queue.map(t => [t.id, t])).values()].slice(0,3);
-      $('#compact-panel').innerHTML = unique.length ? unique.map((t, i) => html`<div class="compact-task ${i === 0 ? 'current-task' : ''}"><small>${i === 0 ? tr('当前任务') : tr('接下来')}</small><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-expand-edit="${esc(t.id)}">${esc(t.title)}</button><small>${t.estimatedMinutes ? tr`${t.estimatedMinutes} 分` : ''}</small></div></div>`).join('') : html('<div class="empty-zone">今天留一点空白。<br>点 ＋，安排一件事。</div>');
+      $('#compact-panel').innerHTML = unique.length ? unique.map((t, i) => html`<div class="compact-task ${i === 0 ? 'current-task' : ''}"><small>${i === 0 ? tr('当前任务') : tr('接下来')}</small><div class="task-top"><input type="checkbox" data-complete="${esc(t.id)}" aria-label="完成：${esc(t.title)}"><button class="task-title" data-expand-edit="${esc(t.id)}">${esc(t.title)}</button><small>${t.estimatedMinutes ? tr`${t.estimatedMinutes} 分` : ''}</small></div>${checklistHTML(t)}</div>`).join('') : html('<div class="empty-zone">今天留一点空白。<br>点 ＋，安排一件事。</div>');
     }
   }
   async function reviewTask(id) {
@@ -366,6 +378,19 @@
 
   document.addEventListener('click', action(async event => {
     if (!event.target.closest('.popover,#menu-button,#opacity-button')) closePopovers();
+    const expand = event.target.closest('[data-checklist-expand]');
+    if (expand) {
+      const id = expand.dataset.checklistExpand, show = !expandedChecklists.has(id);
+      if (show) expandedChecklists.add(id); else expandedChecklists.delete(id);
+      // Update in place so keyboard focus and the pointer target stay stable.
+      for (const button of document.querySelectorAll('[data-checklist-expand]')) {
+        if (button.dataset.checklistExpand !== id) continue;
+        const rows = [...button.parentElement.querySelectorAll('.card-step')];
+        rows.forEach((row, index) => { row.hidden = index >= 3 && !show; });
+        button.setAttribute('aria-expanded', String(show));
+        button.textContent = show ? tr('收起步骤') : tr`展开其余 ${rows.length - 3} 步`;
+      }
+    }
     const close = event.target.closest('[data-close]'); if (close) document.getElementById(close.dataset.close).close();
     const view = event.target.closest('[data-view]'); if (view) openLibrary(view.dataset.view);
     const add = event.target.closest('[data-add]'); if (add) await openEditor(null, { level: Number(add.dataset.add) });
@@ -381,8 +406,16 @@
     const relink = event.target.closest('[data-relink]'); if (relink) { await call('files:relink', { taskId: editingId, fileId: relink.dataset.relink }); availability.delete(relink.dataset.relink); renderAttachments(); }
     const remove = event.target.closest('[data-file-remove]'); if (remove) { if (editingId) await call('files:remove', { taskId: editingId, fileId: remove.dataset.fileRemove }); else { draftFiles.splice(Number(remove.dataset.fileRemove), 1); renderAttachments(); } }
   }));
+  document.addEventListener('change', action(async event => {
+    const input = event.target;
+    if (!input.matches('[data-card-step]')) return;
+    try {
+      await call('checklist:set', { id: input.dataset.checkTask, itemId: input.dataset.cardStep, done: input.checked });
+      toast(tr('步骤已保存'), true);
+    } catch (e) { input.checked = !input.checked; throw e; }
+  }));
   document.addEventListener('change', action(async event => { if (!event.target.matches('[data-complete]')) return; const input = event.target; try { await call('status', { id: input.dataset.complete, action: 'complete' }); toast(tr('已完成'), true); } catch (e) { input.checked = false; throw e; } }));
-  document.addEventListener('dragstart', event => { const task = event.target.closest('[data-task]'); if (!task) return; draggedId = task.dataset.task; event.dataTransfer.setData('text/plain', draggedId); event.dataTransfer.effectAllowed = 'move'; });
+  document.addEventListener('dragstart', event => { if (event.target.closest('.card-checklist')) { event.preventDefault(); return; } const task = event.target.closest('[data-task]'); if (!task) return; draggedId = task.dataset.task; event.dataTransfer.setData('text/plain', draggedId); event.dataTransfer.effectAllowed = 'move'; });
   const clearDrag = () => document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
   document.addEventListener('dragover', event => {
     event.preventDefault(); const isFile = Array.from(event.dataTransfer.types).includes('Files');

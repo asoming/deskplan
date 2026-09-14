@@ -1,6 +1,9 @@
 (function (root) {
   'use strict';
   const english = {
+  "收起步骤": "Collapse steps",
+  "展开其余 {0} 步": "Show {0} more steps",
+  "步骤已保存": "Step saved",
   "下载更新": "Download update",
   "稍后": "Later",
   "更新说明": "Release notes",

@@ -51,3 +51,20 @@ test('batch file creation is one undo operation and accepts missing links in bac
   store.createFromFiles(1, paths); assert.equal(store.state.tasks.length, 2); assert.equal(store.state.tasks[0].title, 'a');
   const recovered = new Store(dir); assert.equal(recovered.state.tasks[0].files[0].path, paths[0].path); store.undo(); assert.equal(store.state.tasks.length, 0);
 });
+
+test('individual checklist updates merge, persist and undo without completing their task', t => {
+  const { dir, store } = fixture(t);
+  const id = store.create({ title: '逐步处理', notes: '保留备注', checklist: [{ id: 'first', text: '第一步' }, { id: 'second', text: '第二步' }] });
+  store.setChecklistDone(id, 'first', true);
+  store.setChecklistDone(id, 'second', true);
+  const task = new Store(dir).state.tasks[0];
+  assert.deepEqual(task.checklist.map(i => i.done), [true, true]);
+  assert.equal(task.status, 'active'); assert.equal(task.notes, '保留备注');
+  store.undo(); assert.deepEqual(store.state.tasks[0].checklist.map(i => i.done), [true, false]);
+  store.setChecklistDone(id, 'first', false);
+  const before = store.snapshot();
+  for (const [itemId, done] of [['missing', true], ['first', 'true']]) assert.throws(() => store.setChecklistDone(id, itemId, done));
+  assert.deepEqual(store.snapshot(), before);
+  store.status(id, 'complete');
+  assert.throws(() => store.setChecklistDone(id, 'first', true));
+});

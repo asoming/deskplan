@@ -219,6 +219,7 @@ function registerIPC() {
     'quick:create': async ({ title }) => { const id = store.create({ title, inbox: true, level: 3 }); broadcast(); quickWin?.hide(); message(tr('已记入收集箱')); return id; },
     create: async input => { const files = input.paths?.length ? inspectPaths(input.paths) : []; const id = store.create(input, files); broadcast(); return id; },
     update: async ({ id, patch }) => { store.update(id, patch); broadcast(); },
+    'checklist:set': async ({ id, itemId, done }) => { store.setChecklistDone(id, itemId, done); broadcast(); },
     status: async ({ id, action }) => { store.status(id, action); broadcast(); },
     undo: async () => { store.undo(); broadcast(); },
     purge: async ({ id }) => {

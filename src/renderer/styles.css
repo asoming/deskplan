@@ -69,3 +69,13 @@ body:not(.position-fixed) .zone-heading,body:not(.position-fixed) .empty-zone{cu
 
 .update-transfer progress { width: 100%; height: 8px; accent-color: var(--accent); margin-bottom: 12px; }
 .update-transfer p:empty { display: none; }
+
+/* Checklist content stays readable independently of the panel background. */
+.card-checklist{margin:9px 0 0 23px;display:grid;gap:6px;min-width:0;opacity:var(--text-alpha)}
+.card-step{display:flex;align-items:flex-start;gap:7px;min-width:0;font-size:12px;line-height:1.6;cursor:pointer;-webkit-app-region:no-drag}
+.card-step[hidden]{display:none}
+.card-step input{flex:0 0 auto;margin:3px 0 0;width:13px;height:13px;cursor:pointer}
+.card-step span{min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.card-step:has(input:checked) span{text-decoration:line-through;color:var(--muted)}
+.checklist-toggle{justify-self:start;padding:1px 0;font-size:11px;color:var(--muted);text-align:left}
+.week-tasks .card-checklist{margin-left:0}.week-tasks .card-step{font-size:11px}
