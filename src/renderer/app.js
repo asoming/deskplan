@@ -284,7 +284,14 @@
     const size = n => (n / 1024 / 1024).toFixed(1);
     const status = d.status === 'downloading' ? tr('正在下载…') + (d.total ? ` ${Math.min(100, Math.floor(d.transferred / d.total * 100))}% · ${size(d.transferred)} / ${size(d.total)} MB` : '') : d.status === 'verifying' ? tr('正在校验更新包…') : d.status === 'preparing' ? tr('正在准备安装，请稍候…') : d.status === 'installing' ? tr('正在安装，即将重启…') : d.status === 'ready' ? tr('更新已下载，可以安装') + ` · ${d.version}` : '';
     document.querySelectorAll('[data-update-transfer]').forEach(node => {
-      node.innerHTML = `<p role="status" aria-live="polite">${esc(status)}</p>${d.status === 'downloading' ? `<progress aria-label="${esc(tr('下载进度'))}" ${d.total ? `value="${d.transferred}" max="${d.total}"` : ''}></progress><button data-update-cancel>${tr('取消下载')}</button>` : ''}${d.error ? `<p role="alert">${esc(tr(d.error))}</p>` : ''}${d.status === 'ready' ? `<button class="primary" data-update-install>${tr('安装并重启')}</button>` : ''}`;
+      const key = [d.status, d.error, d.version, state.settings.language].join('|');
+      if (node.dataset.updateKey !== key) {
+      node.dataset.updateKey = key;
+      node.innerHTML = `<p data-transfer-label role="status" aria-live="polite">${esc(status)}</p>${d.status === 'downloading' ? `<progress aria-label="${esc(tr('下载进度'))}" ${d.total ? `value="${d.transferred}" max="${d.total}"` : ''}></progress><button data-update-cancel>${tr('取消下载')}</button>` : ''}${d.error ? `<p role="alert">${esc(tr(d.error))}</p>` : ''}${d.status === 'ready' ? `<button class="primary" data-update-install>${tr('安装并重启')}</button>` : ''}`;
+      }
+      node.querySelector('[data-transfer-label]').textContent = status;
+      const progress = node.querySelector('progress');
+      if (progress && d.total) { progress.max = d.total; progress.value = d.transferred; }
     });
     $('#update-status').textContent = update.status === 'available' && update.installReason ? tr(update.installReason) : update.status === 'checking' ? tr('正在连接 GitHub…') : update.status === 'available' ? tr`发现新版本 ${update.release.version}` : update.status === 'current' ? tr('当前已是最新正式版') : update.status === 'error' ? tr(update.error) : tr('仅检查日序的 GitHub 正式版本');
     if ($('#update-dialog').open && update.release) $('#update-versions').textContent = tr`当前 ${state.native.version} → 新版 ${update.release.version}`;

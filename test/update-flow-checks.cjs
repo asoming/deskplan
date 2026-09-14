@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
 const {Readable}=require('node:stream'),{createHash}=require('node:crypto');
 const {assetName}=require('../src/update-download.cjs');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const payload=Buffer.alloc(20000,42),hash=createHash('sha256').update(payload).digest('hex');
+const payload=Buffer.alloc(100000,42),hash=createHash('sha256').update(payload).digest('hex');
 let installed=0,failInstall=false;
 exports.options={updateTarget:{kind:'local'},updateRequest:async(url,signal)=>({size:url.endsWith('.txt')?0:payload.length,body:url.endsWith('.txt')?Readable.from([Buffer.from(`${hash}  ${assetName('9.8.7','local','x64')}\n`)]):Readable.from((async function*(){for(let i=0;i<payload.length;i+=2000){await sleep(30);if(signal.aborted)throw Error('下载已取消');yield payload.subarray(i,i+2000);}})())}),updateInstall:async()=>{if(failInstall)throw Error('test installer refused');installed++;}};
 exports.check=async(runtime,js,call,setResponse)=>{
@@ -15,6 +15,9 @@ exports.check=async(runtime,js,call,setResponse)=>{
  await until(()=>runtime.downloader.state.transferred>0);
  assert.equal(await js('window.updateBoardElement === document.querySelector(".task")'),true,'download progress must not rebuild task cards or interrupt dragging');
  assert.match(await js('document.querySelector("[data-update-transfer]").textContent'),/Downloading/);
+ await js('window.cancelDownloadButton = document.querySelector("[data-update-cancel]")');
+ await until(()=>runtime.downloader.state.transferred>=20000);
+ assert.equal(await js('window.cancelDownloadButton === document.querySelector("[data-update-cancel]")'),true,'progress must preserve cancel button focus and pointer target');
  await js('document.querySelector("[data-update-cancel]").click()');await until(()=>runtime.downloader.state.status==='error');
  assert.equal(runtime.downloader.state.error,'下载已取消');assert.equal(installed,0);
  await js('document.querySelector("#settings-download-update").click()');await until(()=>runtime.downloader.state.status==='ready');
