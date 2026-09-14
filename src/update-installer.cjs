@@ -89,17 +89,17 @@ async function launchInstall({ plan, directory, parentPid = process.pid, helperE
   let executable = helperExecutable, args = [helper, config], env = { ...environment, ELECTRON_RUN_AS_NODE: '1' };
   if (plan.kind === 'nsis') {
     executable = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
-    args = ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-EncodedCommand', Buffer.from(require('./update-windows.cjs').windowsCommand(config), 'utf16le').toString('base64')];
+    args = ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(require('./update-windows.cjs').windowsCommand(config), 'utf16le').toString('base64')];
     // A parent PowerShell 7 session can export incompatible module paths to Windows PowerShell 5.1.
     env = { ...environment, PSModulePath: path.join(path.dirname(executable), 'Modules') };
   } else fs.copyFileSync(path.join(__dirname, 'update-helper.cjs'), helper);
   const log = fs.openSync(path.join(directory, 'install.log'), 'a', 0o600);
-  const child = spawn(executable, args, { detached: true, windowsHide: true, stdio: ['ignore', 'pipe', log], env });
+  const child = spawn(executable, args, { detached: process.platform !== 'win32', windowsHide: true, stdio: ['ignore', 'pipe', log], env });
   fs.closeSync(log);
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => { child.kill(); reject(Error('无法启动更新安装程序')); }, 15000);
     const fail = error => { clearTimeout(timeout); reject(error); };
-    child.once('error', fail); child.once('exit', () => fail(Error('无法启动更新安装程序')));
+    child.once('error', fail); child.once('exit', (code, signal) => fail(Error(`无法启动更新安装程序 (${code ?? signal})`)));
     let output = '';
     child.stdout.on('data', data => {
       output += data.toString(); if (!output.includes('\n')) return;

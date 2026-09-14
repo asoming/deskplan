@@ -15,5 +15,5 @@ test('Windows helper starts with Unicode paths and reports an installer failure'
  try{await require('../src/update-installer.cjs').launchInstall({directory,parentPid:2147483647,plan:{kind:'nsis',file:path.join(directory,'missing.exe'),root:directory,executable:process.execPath}});
  for(let i=0;i<100&&!fs.existsSync(path.join(directory,'install-result.json'));i++)await new Promise(r=>setTimeout(r,50));
  assert.equal(JSON.parse(fs.readFileSync(path.join(directory,'install-result.json'),'utf8')).ok,false);
- }catch(error){console.error(fs.readFileSync(path.join(directory,'install.log'),'utf8'));throw error;}
+ }catch(error){console.error(fs.readFileSync(path.join(directory,'install.log'),'utf8'));console.error('Result created:',fs.existsSync(path.join(directory,'install-result.json')));const probe=require('node:child_process').spawnSync(path.join(process.env.SystemRoot,'System32','WindowsPowerShell','v1.0','powershell.exe'),['-NoProfile','-NonInteractive','-Command','Write-Output READY'],{encoding:'utf8',windowsHide:true});console.error('PowerShell probe:',probe.status,probe.stdout,probe.stderr);throw error;}
 });
