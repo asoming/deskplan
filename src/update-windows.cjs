@@ -4,9 +4,10 @@ function windowsCommand(config) {
   const literal = config.replace(/'/g, "''");
   return `
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+$env:PSModulePath = [IO.Path]::Combine($env:SystemRoot, 'System32\\WindowsPowerShell\\v1.0\\Modules')
 $plan = Get-Content -Encoding UTF8 -LiteralPath '${literal}' -Raw | ConvertFrom-Json
-[Console]::Out.WriteLine('READY')
-[Console]::Out.Flush()
+[IO.File]::WriteAllText($plan.ready, 'READY')
 try {
   for ($i=0; $i -lt 300; $i++) {
     if (-not (Get-Process -Id $plan.parentPid -ErrorAction SilentlyContinue)) { break }
@@ -18,6 +19,7 @@ try {
   if ($installer.ExitCode -notin @(0,3010)) { throw 'Installer failed or was cancelled' }
   $result = @{ ok = $true }
 } catch {
+  [IO.File]::AppendAllText($plan.log, $_.Exception.ToString())
   $result = @{ ok = $false; error = '安装被取消或失败，请重试' }
 }
 [IO.File]::WriteAllText($plan.result, ($result | ConvertTo-Json -Compress), (New-Object Text.UTF8Encoding($false)))

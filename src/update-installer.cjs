@@ -85,14 +85,21 @@ async function prepareInstall({ candidate, target, directory, check = checkIdent
 }
 async function launchInstall({ plan, directory, parentPid = process.pid, helperExecutable = process.execPath, environment = process.env }) {
   const helper = path.join(directory, 'install-helper.cjs'), config = path.join(directory, 'install-plan.json');
-  atomicWrite(config, JSON.stringify({ ...plan, parentPid, result: path.join(directory, 'install-result.json') }));
-  let executable = helperExecutable, args = [helper, config], env = { ...environment, ELECTRON_RUN_AS_NODE: '1' };
+  const ready = path.join(directory, randomUUID() + '.ready');
+  atomicWrite(config, JSON.stringify({ ...plan, parentPid, ready, log: path.join(directory, 'install.log'), result: path.join(directory, 'install-result.json') }));
   if (plan.kind === 'nsis') {
-    executable = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
-    args = ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(require('./update-windows.cjs').windowsCommand(config), 'utf16le').toString('base64')];
-    // A parent PowerShell 7 session can export incompatible module paths to Windows PowerShell 5.1.
-    env = { ...environment, PSModulePath: path.join(path.dirname(executable), 'Modules') };
-  } else fs.copyFileSync(path.join(__dirname, 'update-helper.cjs'), helper);
+    fs.closeSync(fs.openSync(path.join(directory, 'install.log'), 'a', 0o600));
+    const encoded = Buffer.from(require('./update-windows.cjs').windowsCommand(config), 'utf16le').toString('base64');
+    const pid = require('./native/build/Release/window_layer.node').spawnUpdater(encoded, directory);
+    for (let i = 0; i < 300; i++) {
+      if (fs.existsSync(ready)) { fs.rmSync(ready); return; }
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    try { process.kill(pid); } catch {}
+    throw Error('无法启动更新安装程序');
+  }
+  const executable = helperExecutable, args = [helper, config], env = { ...environment, ELECTRON_RUN_AS_NODE: '1' };
+  fs.copyFileSync(path.join(__dirname, 'update-helper.cjs'), helper);
   const log = fs.openSync(path.join(directory, 'install.log'), 'a', 0o600);
   const child = spawn(executable, args, { detached: process.platform !== 'win32', windowsHide: true, stdio: ['ignore', 'pipe', log], env });
   fs.closeSync(log);
