@@ -62,7 +62,7 @@ module.exports=async function checkWindow(runtime,js,call){
     const desktopId=desktop.getNativeWindowHandle().readUInt32LE(0);
     assert.ok(order.includes(desktopId)&&order.indexOf(desktopId)<order.indexOf(id),'panel must be above desktop icons and their input surface');
     assert.ok(order.includes(id)&&order.includes(otherId));assert.ok(order.indexOf(id)<order.indexOf(otherId),'panel must stay below other windows after focus');
-   } else if(process.platform==='win32') {
+   } else if(process.platform==='win32' || process.platform==='darwin') {
     const layer=require('../src/native/build/Release/window_layer.node');
     assert.equal(layer.isBelow(win.getNativeWindowHandle(),covering.getNativeWindowHandle()),true);
    }

@@ -286,13 +286,10 @@ async function start(options = {}) {
   const bounds = panelBounds(store.state.settings, saved || area, area);
   win = new BrowserWindow({ ...bounds, show: false, frame: false, transparent: true, backgroundColor: '#00000000',
     resizable: false, maximizable: false, minimizable: false, fullscreenable: false, hasShadow: true,
-    ...(process.platform === 'darwin' ? { type: 'desktop' } : {}),
     title: tr('日序'), icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false, webSecurity: true } });
-  if (process.platform !== 'darwin') {
-    const layer = require('./native/build/Release/window_layer.node');
-    layer.attach(win.getNativeWindowHandle());
-  }
+  const layer = require('./native/build/Release/window_layer.node');
+  layer.attach(win.getNativeWindowHandle());
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', event => event.preventDefault());
   win.webContents.on('will-attach-webview', event => event.preventDefault());

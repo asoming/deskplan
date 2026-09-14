@@ -28,6 +28,20 @@
               "-lX11"
             ]
           }
+        ],
+        [
+          "OS=='mac'",
+          {
+            "sources": [
+              "window_layer_mac.mm"
+            ],
+            "link_settings": {
+              "libraries": [
+                "-framework Cocoa",
+                "-framework CoreGraphics"
+              ]
+            }
+          }
         ]
       ]
     }
