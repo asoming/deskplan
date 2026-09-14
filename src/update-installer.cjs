@@ -94,7 +94,7 @@ async function launchInstall({ plan, directory, parentPid = process.pid, helperE
     env = { ...environment, PSModulePath: path.join(path.dirname(executable), 'Modules') };
   } else fs.copyFileSync(path.join(__dirname, 'update-helper.cjs'), helper);
   const log = fs.openSync(path.join(directory, 'install.log'), 'a', 0o600);
-  const child = spawn(executable, args, { detached: true, windowsHide: true, stdio: ['ignore', 'pipe', log], env });
+  const child = spawn(executable, args, { detached: process.platform !== 'win32', windowsHide: true, stdio: ['ignore', 'pipe', log], env });
   fs.closeSync(log);
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => { child.kill(); reject(Error('无法启动更新安装程序')); }, 15000);
