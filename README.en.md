@@ -11,7 +11,7 @@ No account. Works offline. No ads, telemetry, or background cloud synchronizatio
 
 ## Belong on the desktop
 
-Desktop blend mode softens borders, shadows and large colored surfaces. Controls fade when idle and return on hover or keyboard focus. Background and text transparency are independent, each adjustable from 0–100%.
+Desktop blend mode softens borders, shadows and large colored surfaces. Sidebar icons hide when idle and appear when hovering over the sidebar or focusing it with the keyboard. Background and text transparency are independent, each adjustable from 0–100%.
 
 Right-click the panel to fix/unlock its position, open settings or quit. Once unlocked, drag empty areas or quadrant headings to move it. Tasks and file drops remain interactive.
 

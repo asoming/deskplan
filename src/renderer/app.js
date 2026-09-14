@@ -31,7 +31,7 @@
   function action(fn) { return event => Promise.resolve().then(() => fn(event)).catch(error); }
   async function call(name, payload) { const result = await api.call(name, payload); $('#save-status').textContent = tr('本地保存'); return result; }
   function closePopovers() { $('#app-menu').hidden = true; $('#opacity-popover').hidden = true; $('#menu-button').setAttribute('aria-expanded', 'false'); $('#opacity-button').setAttribute('aria-expanded', 'false'); }
-  function setTransparency(value) { document.documentElement.style.setProperty('--alpha', String((100 - value) / 100)); $('#opacity-label').textContent = `${value}%`; $('#transparency').value = value; $('#transparency-value').textContent = `${value}%`; }
+  function setTransparency(value) { document.documentElement.style.setProperty('--wallpaper-alpha', String(value / 100)); document.documentElement.style.setProperty('--alpha', String((100 - value) / 100)); $('#opacity-label').textContent = `${value}%`; $('#transparency').value = value; $('#transparency-value').textContent = `${value}%`; }
   function setTextTransparency(value) {
     document.documentElement.style.setProperty('--text-alpha', String((100 - value) / 100));
     $('#text-transparency').value = value; $('#text-transparency-value').textContent = `${value}%`;

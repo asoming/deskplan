@@ -8,7 +8,7 @@ Switch to Today when it is time to act, placing up to three priorities at the to
 
 Capture a thought with a global shortcut, press Enter, and return to your work. Drop files onto tasks. Break a larger task into checklist steps, repeat routine work, or snooze a reminder without changing the deadline.
 
-Rixu can become a quiet layer on your desktop: subtle borders, independent text and background transparency, controls that fade when idle, and a mini window containing the current task and the next two. Minimalism should not mean losing access to your controls.
+Rixu can become a quiet layer on your desktop: subtle borders, independent text and background transparency, sidebar icons that appear on sidebar hover, and a mini window containing the current task and the next two. Minimalism should not mean losing access to your controls.
 
 Your tasks live on your computer. There is no account requirement; the app works offline, keeps backups, and exports JSON or CSV. Version 1.0 focuses on individual desktop planning, without cloud sync or team collaboration.
 

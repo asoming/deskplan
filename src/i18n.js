@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
   const english = {
+  "自动隐藏侧栏图标": "Auto-hide sidebar icons",
+  "鼠标移到侧栏时显示，移开后隐藏": "Show while hovering over the sidebar; hide when the pointer leaves",
   "关联文件": "Linked files",
   "拖入文件或文件夹，或点击添加": "Drop files or folders here, or use Add",
   "软件更新": "Software updates",
