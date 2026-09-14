@@ -64,5 +64,6 @@ body:not(.position-fixed) .zone-heading,body:not(.position-fixed) .empty-zone{cu
 
 /* A fine opposite-color edge keeps transparent-panel text readable on wallpaper. */
 #app{--text-edge:light-dark(rgb(255 255 255 / var(--wallpaper-alpha,0)),rgb(0 0 0 / var(--wallpaper-alpha,0)));text-shadow:-.6px 0 var(--text-edge),.6px 0 var(--text-edge),0 -.6px var(--text-edge),0 .6px var(--text-edge)}
+#app button{text-shadow:inherit}
 #app .popover{text-shadow:none}
 @media(prefers-reduced-motion:reduce){.quiet-controls .tool-rail{transition:none}}

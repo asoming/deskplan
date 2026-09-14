@@ -26,6 +26,8 @@ module.exports = async function readabilityChecks(runtime, js, call) {
   await call('settings', {textTransparency:0});
   if (process.env.RIXU_ARTIFACTS_DIR) {
     await js('document.body.style.background="linear-gradient(135deg,#591c3f,#9b465a)"');
+    await sleep(180);
+    assert.notEqual(await js('getComputedStyle(document.querySelector(".task-title")).textShadow'), "none", "task title buttons retain wallpaper contrast edge");
     const fs=require('node:fs'),path=require('node:path');
     fs.writeFileSync(path.join(process.env.RIXU_ARTIFACTS_DIR,'readable-text.png'),(await runtime.window.webContents.capturePage()).toPNG());
     await js('document.body.style.background=""');
