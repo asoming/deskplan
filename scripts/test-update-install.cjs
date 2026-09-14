@@ -26,7 +26,8 @@ async function test(binary, candidateFile, kind){
  const child=spawn(electron,[__filename,'prepare',path.join(directory,'target.json'),path.join(directory,'candidate.json'),directory,String(port)],{env,stdio:'inherit'});
  await new Promise((resolve,reject)=>{child.once('error',reject);child.once('exit',code=>code===0?resolve():reject(Error('update helper preparation failed: '+code)));});
  let page;
- for(let i=0;i<200;i++) {try{page=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(p=>p.type==='page'&&p.url.endsWith('/renderer/index.html'));if(page)break;}catch{}await sleep(100);}
+ for(let i=0;i<900;i++) {try{page=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(p=>p.type==='page'&&p.url.endsWith('/renderer/index.html'));if(page)break;}catch{}await sleep(100);}
+ if(!page){for(const name of ['install.log','install-result.json']){try{console.error(name,fs.readFileSync(path.join(directory,name),'utf8'));}catch{console.error(name,'not created');}}}
  assert.ok(page,'the installed update restarts its real renderer');
  const socket=new WebSocket(page.webSocketDebuggerUrl);await new Promise((r,j)=>{socket.addEventListener('open',r,{once:true});socket.addEventListener('error',j,{once:true});});let sequence=0;const pending=new Map();socket.addEventListener('message',e=>{const d=JSON.parse(e.data),p=pending.get(d.id);if(p){pending.delete(d.id);d.error?p.reject(Error(JSON.stringify(d.error))):p.resolve(d.result);}});
  const evaluate=expression=>new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve:r=>r.exceptionDetails?reject(Error(JSON.stringify(r.exceptionDetails))):resolve(r.result.value),reject});socket.send(JSON.stringify({id,method:'Runtime.evaluate',params:{expression,awaitPromise:true,returnByValue:true}}));});
