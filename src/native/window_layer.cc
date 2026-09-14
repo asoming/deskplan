@@ -76,7 +76,7 @@ static napi_value SpawnUpdater(napi_env env, napi_callback_info info) {
   }
   std::fprintf(stderr, "Updater native: child started\n"); std::fflush(stderr);
   CloseHandle(process.hThread); CloseHandle(process.hProcess);
-  napi_value result; napi_create_uint32(env, process.dwProcessId, &result); return result;
+  napi_value result; napi_create_uint32(env, process.dwProcessId, &result); std::fprintf(stderr, "Updater native: returning\n"); std::fflush(stderr); return result;
 }
 static napi_value Init(napi_env env, napi_value exports) {
   napi_property_descriptor properties[] = {{"attach", nullptr, Attach, nullptr, nullptr, nullptr, napi_default, nullptr}, {"isBelow", nullptr, IsBelow, nullptr, nullptr, nullptr, napi_default, nullptr}};

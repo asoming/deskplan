@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $env:PSModulePath = [IO.Path]::Combine($env:SystemRoot, 'System32\\WindowsPowerShell\\v1.0\\Modules')
 $plan = Get-Content -Encoding UTF8 -LiteralPath '${literal}' -Raw | ConvertFrom-Json
+[IO.File]::AppendAllText($plan.log, 'Ready' + [Environment]::NewLine)
 [IO.File]::WriteAllText($plan.ready, 'READY')
 try {
   for ($i=0; $i -lt 300; $i++) {
@@ -14,8 +15,10 @@ try {
     Start-Sleep -Milliseconds 100
   }
   if (Get-Process -Id $plan.parentPid -ErrorAction SilentlyContinue) { throw 'App did not exit' }
+  [IO.File]::AppendAllText($plan.log, 'Parent exited' + [Environment]::NewLine)
   $arguments = '/S --updated --keep-shortcuts /D=' + $plan.root
   $installer = Start-Process -FilePath $plan.file -ArgumentList $arguments -PassThru -Wait
+  [IO.File]::AppendAllText($plan.log, 'Installer finished' + [Environment]::NewLine)
   if ($installer.ExitCode -notin @(0,3010)) { throw 'Installer failed or was cancelled' }
   $result = @{ ok = $true }
 } catch {

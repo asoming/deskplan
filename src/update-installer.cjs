@@ -91,8 +91,9 @@ async function launchInstall({ plan, directory, parentPid = process.pid, helperE
     fs.closeSync(fs.openSync(path.join(directory, 'install.log'), 'a', 0o600));
     const encoded = Buffer.from(require('./update-windows.cjs').windowsCommand(config), 'utf16le').toString('base64');
     const pid = require('./native/build/Release/window_layer.node').spawnUpdater(encoded, directory);
+    console.error('Updater helper PID:', pid);
     for (let i = 0; i < 300; i++) {
-      if (fs.existsSync(ready)) { fs.rmSync(ready); return; }
+      if (fs.existsSync(ready)) { console.error('Updater helper ready'); fs.rmSync(ready); return; }
       await new Promise(resolve => setTimeout(resolve, 50));
     }
     try { process.kill(pid); } catch {}
