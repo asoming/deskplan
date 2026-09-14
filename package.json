@@ -8,7 +8,7 @@
   "main": "src/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/*.test.cjs",
+    "test": "node --test --test-reporter=tap test/*.test.cjs",
     "test:desktop": "electron test/desktop-smoke.cjs",
     "package": "node scripts/build.cjs",
     "test:planner": "electron test/planner-desktop.cjs",
