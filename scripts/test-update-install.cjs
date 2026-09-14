@@ -37,5 +37,5 @@ async function test(binary, candidateFile, kind){
  }finally{evaluate('window.fourfold.call("window:quit")').catch(()=>{});await sleep(1000);socket.close();}
  return 'real '+kind+' update replacement, restart, backup runtime and data preservation';
 }
-if(process.argv[2]==='prepare')prepare().catch(e=>{console.error(e);process.exitCode=1;});
+if(process.argv[2]==='prepare')prepare().catch(e=>{console.error(e);try{console.error(fs.readFileSync(path.join(process.argv[5],'install.log'),'utf8'));}catch{}process.exitCode=1;});
 module.exports={test};

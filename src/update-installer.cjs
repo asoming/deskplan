@@ -70,10 +70,11 @@ async function prepareInstall({ candidate, target, directory, check = checkIdent
         await command('hdiutil', ['attach', candidate.file, '-nobrowse', '-readonly', '-mountpoint', mount]); mounted = true;
         const bundle = path.join(mount, '日序.app');
         await command('codesign', ['--verify', '--deep', '--strict', bundle]);
-        check(bundle, candidate.version, target.kind);
         prepared = path.join(stage, '日序.app');
         (process.versions.electron ? require('original-fs') : fs).cpSync(bundle, prepared, { recursive: true, verbatimSymlinks: true });
         await command('codesign', ['--verify', '--deep', '--strict', prepared]);
+        // Electron caches ASAR descriptors; inspect the copy so the DMG can be unmounted.
+        check(prepared, candidate.version, target.kind);
       } finally {
         if (mounted) await command('hdiutil', ['detach', mount]);
         fs.rmSync(mount, { recursive: true, force: true });
@@ -89,7 +90,8 @@ async function launchInstall({ plan, directory, parentPid = process.pid, helperE
   if (plan.kind === 'nsis') {
     executable = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
     args = ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-EncodedCommand', Buffer.from(require('./update-windows.cjs').windowsCommand(config), 'utf16le').toString('base64')];
-    env = environment;
+    // A parent PowerShell 7 session can export incompatible module paths to Windows PowerShell 5.1.
+    env = { ...environment, PSModulePath: path.join(path.dirname(executable), 'Modules') };
   } else fs.copyFileSync(path.join(__dirname, 'update-helper.cjs'), helper);
   const log = fs.openSync(path.join(directory, 'install.log'), 'a', 0o600);
   const child = spawn(executable, args, { detached: true, windowsHide: true, stdio: ['ignore', 'pipe', log], env });
