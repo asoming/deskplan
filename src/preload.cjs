@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('fourfold', {
   onLanguage: callback => subscribe('fourfold:language', callback),
   onQuickFocus: callback => subscribe('fourfold:quick-focus', callback),
   onReview: callback => subscribe('fourfold:review', callback),
+  onUpdates: callback => subscribe('fourfold:updates', callback),
   onState: callback => subscribe('fourfold:state', callback),
   onMessage: callback => subscribe('fourfold:message', callback),
   onLocate: callback => subscribe('fourfold:locate', callback),

@@ -11,8 +11,9 @@ exports.check=async(runtime,js,call,setResponse)=>{
  setResponse({tag_name:'v9.8.7',draft:false,prerelease:false});await call('updates:check');
  await call('settings',{language:'en'});
  await js('document.querySelector("#settings-button").click()');
- await js('document.querySelector("#settings-download-update").click()');
+ await js('window.updateBoardElement = document.querySelector(".task");document.querySelector("#settings-download-update").click()');
  await until(()=>runtime.downloader.state.transferred>0);
+ assert.equal(await js('window.updateBoardElement === document.querySelector(".task")'),true,'download progress must not rebuild task cards or interrupt dragging');
  assert.match(await js('document.querySelector("[data-update-transfer]").textContent'),/Downloading/);
  await js('document.querySelector("[data-update-cancel]").click()');await until(()=>runtime.downloader.state.status==='error');
  assert.equal(runtime.downloader.state.error,'下载已取消');assert.equal(installed,0);

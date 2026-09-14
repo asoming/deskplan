@@ -44,6 +44,7 @@ function viewState() {
       autoStartSupported: process.platform !== 'linux' || app.isPackaged },
   };
 }
+function broadcastUpdates() { if (win && !win.isDestroyed()) win.webContents.send('fourfold:updates', updateState()); }
 function broadcast() { if (win && !win.isDestroyed()) win.webContents.send('fourfold:state', viewState()); }
 function message(text) { if (win && !win.isDestroyed()) win.webContents.send('fourfold:message', text); }
 function showWindow(taskId) { if (taskId && store.state.settings.compactMode) { store.saveSettings({ compactMode: false }); applySettings(); broadcast(); } if (!win || win.isDestroyed()) return; win.show(); if (win.isMinimized()) win.restore(); win.focus(); if (taskId) win.webContents.send('fourfold:locate', taskId); }
@@ -303,10 +304,10 @@ async function start(options = {}) {
   app.on('second-instance', () => showWindow());
   await app.whenReady();
   store = new Store(app.getPath('userData'));
-  updater = new UpdateChecker({ version: require('../package.json').version, fetch: isTest && options.updateFetch ? options.updateFetch : (...args) => net.fetch(...args), latestURL: () => latestReleaseURL(net), cacheFile: path.join(app.getPath('userData'), 'updates.json'), onChange: broadcast });
+  updater = new UpdateChecker({ version: require('../package.json').version, fetch: isTest && options.updateFetch ? options.updateFetch : (...args) => net.fetch(...args), latestURL: () => latestReleaseURL(net), cacheFile: path.join(app.getPath('userData'), 'updates.json'), onChange: broadcastUpdates });
   updateTarget = isTest && options.updateTarget ? options.updateTarget : installTarget({ packaged: app.isPackaged });
   installHook = isTest ? options.updateInstall : null;
-  downloader = new UpdateDownload({ directory: path.join(app.getPath('userData'), 'updates'), version: require('../package.json').version, kind: updateTarget.kind, arch: isTest && options.updateTarget?.kind === 'local' ? 'x64' : process.arch, request: isTest && options.updateRequest ? options.updateRequest : (url, signal) => requestAsset(net, url, signal), onChange: broadcast });
+  downloader = new UpdateDownload({ directory: path.join(app.getPath('userData'), 'updates'), version: require('../package.json').version, kind: updateTarget.kind, arch: isTest && options.updateTarget?.kind === 'local' ? 'x64' : process.arch, request: isTest && options.updateRequest ? options.updateRequest : (url, signal) => requestAsset(net, url, signal), onChange: broadcastUpdates });
   await downloader.restore();
   const resultFile = path.join(downloader.directory, 'install-result.json');
   try { const result = JSON.parse(fs.readFileSync(resultFile, 'utf8')); if (!result.ok) downloader.change({ error: result.error || '安装失败，请重试' }); fs.rmSync(resultFile); } catch {}

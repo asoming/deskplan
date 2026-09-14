@@ -476,6 +476,7 @@
   if (!api) { $('#task-count').textContent = tr('请通过桌面应用启动日序'); return; }
   api.onActive(active => { panelActive = active; tryShowUpdate(); });
   api.onCommand(command => { if (command === 'settings') $('#settings-button').click(); if (command === 'compact') $('#compact-toggle').click(); });
+  api.onUpdates(updates => { if (!state) return; state = { ...state, updates }; renderUpdateStatus(); tryShowUpdate(); });
   api.onState(receive);
   api.onMessage(text => toast(text));
   api.onTick(value => { now = value; renderBoard(); renderCalendar(); renderPlanner(); });
