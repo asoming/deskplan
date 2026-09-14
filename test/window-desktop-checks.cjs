@@ -1,10 +1,25 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {screen,BrowserWindow}=require('electron');
+const {screen,BrowserWindow,app}=require('electron');
 const {panelBounds}=require('../src/window-layout.cjs');
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 module.exports=async function checkWindow(runtime,js,call){
  const win=runtime.window;
+ assert.equal(runtime.viewState().native.trayAvailable,true,'tray is created');
+ const checkTaskbar = window => {
+  if(process.platform==='linux') {
+   const hints=require('node:child_process').execFileSync('xprop',['-id',String(window.getNativeWindowHandle().readUInt32LE(0)),'_NET_WM_STATE'],{encoding:'utf8'});
+   assert.match(hints,/_NET_WM_STATE_SKIP_TASKBAR/);
+   assert.match(hints,/_NET_WM_STATE_SKIP_PAGER/);
+  } else if(process.platform==='darwin') assert.equal(app.dock.isVisible(),false,'Dock icon stays hidden');
+ };
+ await sleep(100);checkTaskbar(win);
+ await runtime.showQuickCapture();await sleep(100);checkTaskbar(runtime.getQuickWindow());
+ if(process.platform==='linux') {
+  const hints=require('node:child_process').execFileSync('xprop',['-id',String(runtime.getQuickWindow().getNativeWindowHandle().readUInt32LE(0)),'_NET_WM_STATE'],{encoding:'utf8'});
+  assert.doesNotMatch(hints,/_NET_WM_STATE_BELOW/,'quick capture stays interactive at normal window level');
+ }
+ await call('quick:hide');win.focus();await sleep(100);checkTaskbar(win);
  if(process.env.RIXU_TEST_SCALE) assert.equal(screen.getPrimaryDisplay().scaleFactor,Number(process.env.RIXU_TEST_SCALE));
  const area=screen.getDisplayMatching(win.getBounds()).workArea;
  assert.deepEqual(win.getBounds(),panelBounds(runtime.store.state.settings,win.getBounds(),area));
@@ -52,6 +67,7 @@ module.exports=async function checkWindow(runtime,js,call){
  try {
   covering.focus();await sleep(150);
   const checkLayer = () => {
+   checkTaskbar(win);
    if(process.platform==='linux') {
     const {execFileSync}=require('node:child_process');
     const id=win.getNativeWindowHandle().readUInt32LE(0), otherId=covering.getNativeWindowHandle().readUInt32LE(0);
@@ -97,7 +113,7 @@ module.exports=async function checkWindow(runtime,js,call){
   win.moveTop();await sleep(150);checkLayer();
   await call('window:compact',{enabled:true});win.focus();await sleep(150);checkLayer();
   await call('window:compact',{enabled:false});
-  win.hide();win.show();await sleep(150);checkLayer();
+  win.hide();runtime.getTray().emit('click');await sleep(150);assert.equal(win.isVisible(),true);checkLayer();
  } finally { covering.destroy();desktop?.destroy(); }
 
  await call('settings',{language:'zh-CN',desktopInset:0,transparency:65});

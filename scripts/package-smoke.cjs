@@ -28,6 +28,15 @@ async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expres
  assert.ok(page,'packaged renderer page');socket=new WebSocket(page.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});
  socket.addEventListener('message',e=>{const data=JSON.parse(e.data),item=pending.get(data.id);if(!item)return;pending.delete(data.id);data.error?item.reject(Error(JSON.stringify(data.error))):item.resolve(data.result);});
  for(let i=0;i<100;i++){if(await evaluate('!!window.fourfold && document.querySelectorAll(".zone").length===4'))break;await sleep(100);}
+ if(process.platform==='linux') {
+  const windows=execFileSync('xprop',['-root','_NET_CLIENT_LIST'],{encoding:'utf8'}).match(/0x[0-9a-f]+/g)||[];
+  const own=windows.find(id=>{const pid=execFileSync('xprop',['-id',id,'_NET_WM_PID'],{encoding:'utf8'});return Number(pid.match(/= (\d+)/)?.[1])===child.pid;});
+  assert.ok(own,'packaged main window');
+  assert.match(execFileSync('xprop',['-id',own,'_NET_WM_STATE'],{encoding:'utf8'}),/_NET_WM_STATE_SKIP_TASKBAR/);
+ }
+ if(process.platform==='darwin') {
+  assert.equal(execFileSync('/usr/bin/plutil',['-extract','LSUIElement','raw','-o','-',path.resolve(path.dirname(binary),'../Info.plist')],{encoding:'utf8'}).trim(),'true');
+ }
  const initial=await evaluate('window.fourfold.call("state")');assert.equal(initial.tasks.length,reopening?1:0);assert.equal(initial.native.version,require('../package.json').version);assert.equal(initial.native.autoStartSupported,true);
  if (!reopening) {
  await evaluate('document.querySelector("#new-task").click()');await sleep(150);
@@ -43,7 +52,7 @@ async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expres
  const saved=JSON.parse(fs.readFileSync(path.join(directory,'tasks.json'),'utf8'));assert.equal(saved.tasks[0].title,'Packaged save / 正式包保存');assert.equal(saved.schemaVersion,3);assert.equal(saved.settings.language,'en');
  assert.deepEqual(saved.tasks[0].checklist.map(i=>({text:i.text,done:i.done})),[{text:'准备资料',done:true},{text:'检查结果',done:false}]);
  assert.deepEqual(await evaluate('[...document.querySelectorAll("#board .card-step span")].map(e=>e.textContent)'),['准备资料','检查结果']);
- const result={passed:true,platform:process.platform,arch:process.arch,version:initial.native.version,checks:['packaged executable','asar preload and renderer','packaged integrations','UI create','durable schema 3 save','checklist steps visible and toggled in packaged app; retained after restart','clean exit'],sandbox:!flags.includes('--no-sandbox')};
+ const result={passed:true,platform:process.platform,arch:process.arch,version:initial.native.version,checks:['packaged executable','asar preload and renderer','packaged integrations','Linux taskbar hidden / macOS background app metadata','UI create','durable schema 3 save','checklist steps visible and toggled in packaged app; retained after restart','clean exit'],sandbox:!flags.includes('--no-sandbox')};
  finished=true;evaluate('window.fourfold.call("window:quit")').catch(()=>{});const ended=await exit;assert.equal(ended.code,0);socket.close();clearTimeout(timeout);
  if (reopening) return;
  execFileSync(process.execPath,[__filename,binary],{env:{...process.env,RIXU_SMOKE_REOPEN_DIR:directory},stdio:'inherit',timeout:90000});

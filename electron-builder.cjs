@@ -22,6 +22,7 @@ module.exports = {
   win: { target: ['nsis'], icon: 'src/assets/icon.png', artifactName: 'Rixu-${version}-windows-${arch}-setup.${ext}' },
   nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, createDesktopShortcut: true, createStartMenuShortcut: true, shortcutName: '日序', runAfterFinish: false, deleteAppDataOnUninstall: false },
   mac: {
+    extendInfo: { LSUIElement: true },
     executableName: '日序',
     target: ['dmg', 'zip'], category: 'public.app-category.productivity', icon: 'src/assets/icon.png',
     identity: signedMac ? undefined : '-', hardenedRuntime: signedMac,

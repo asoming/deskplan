@@ -6,39 +6,52 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <vector>
 
 // Watch only this app's window. Chromium replaces EWMH hints on hide/show;
-// MapNotify and PropertyNotify let us restore BELOW without timers or focus changes.
+// Restore desktop/taskbar hints after map and property changes, without changing focus.
 struct Layer {
   uv_poll_t poll{};
   napi_env env;
   Display* display;
   Window window;
-  Atom state, below;
+  Atom state;
+  std::vector<Atom> required;
   bool closing = false;
 };
-static void EnsureBelow(Layer* layer) {
+static void EnsureState(Layer* layer) {
   Display* display = layer->display; const Window window = layer->window;
   XWindowAttributes attributes;
-  if (!XGetWindowAttributes(display, window, &attributes) || attributes.map_state == IsUnmapped) return;
+  if (!XGetWindowAttributes(display, window, &attributes)) return;
   Atom type; int format; unsigned long size, remaining; unsigned char* data = nullptr;
   XGetWindowProperty(display, window, layer->state, 0, 128, False, XA_ATOM,
     &type, &format, &size, &remaining, &data);
-  bool hasBelow = false;
+  std::vector<Atom> current;
   if (data && format == 32) {
     auto* atoms = reinterpret_cast<Atom*>(data);
-    hasBelow = std::find(atoms, atoms + size, layer->below) != atoms + size;
+    current.assign(atoms, atoms + size);
   }
   if (data) XFree(data);
-  if (hasBelow) return;
-  XEvent event{};
-  event.xclient.type = ClientMessage; event.xclient.window = window;
-  event.xclient.message_type = layer->state; event.xclient.format = 32;
-  event.xclient.data.l[0] = 1; event.xclient.data.l[1] = layer->below;
-  event.xclient.data.l[3] = 1;
-  XSendEvent(display, DefaultRootWindow(display), False,
-    SubstructureRedirectMask | SubstructureNotifyMask, &event);
-  XFlush(display);
+  bool changed = false;
+  for (Atom atom : layer->required) {
+    if (std::find(current.begin(), current.end(), atom) != current.end()) continue;
+    current.push_back(atom); changed = true;
+    if (attributes.map_state != IsUnmapped) {
+      XEvent event{};
+      event.xclient.type = ClientMessage; event.xclient.window = window;
+      event.xclient.message_type = layer->state; event.xclient.format = 32;
+      event.xclient.data.l[0] = 1; event.xclient.data.l[1] = atom;
+      event.xclient.data.l[3] = 1;
+      XSendEvent(display, DefaultRootWindow(display), False,
+        SubstructureRedirectMask | SubstructureNotifyMask, &event);
+    }
+  }
+  // Set initial hints before mapping so a taskbar button never flashes at startup.
+  if (changed && attributes.map_state == IsUnmapped) {
+    XChangeProperty(display, window, layer->state, XA_ATOM, 32, PropModeReplace,
+      reinterpret_cast<unsigned char*>(current.data()), current.size());
+  }
+  if (changed) XFlush(display);
 }
 static void Dispose(void* data) {
   auto* layer = static_cast<Layer*>(data);
@@ -62,15 +75,19 @@ static void Events(uv_poll_t* handle, int status, int) {
     if (event.type == MapNotify ||
         (event.type == PropertyNotify && event.xproperty.atom == layer->state)) check = true;
   }
-  if (check) EnsureBelow(layer);
+  if (check) EnsureState(layer);
 }
 static napi_value Attach(napi_env env, napi_callback_info info) {
-  size_t count = 1, length = 0;
-  napi_value args[1]; void* bytes = nullptr; bool buffer = false;
+  size_t count = 2, length = 0;
+  napi_value args[2]; void* bytes = nullptr; bool buffer = false;
   napi_get_cb_info(env, info, &count, args, nullptr, nullptr);
-  if (count != 1 || napi_is_buffer(env, args[0], &buffer) != napi_ok || !buffer ||
+  if (count < 1 || napi_is_buffer(env, args[0], &buffer) != napi_ok || !buffer ||
       napi_get_buffer_info(env, args[0], &bytes, &length) != napi_ok || length != sizeof(uint32_t)) {
     napi_throw_error(env, nullptr, "Expected an X11 window handle"); return nullptr;
+  }
+  bool keepBelow = true;
+  if (count > 1 && napi_get_value_bool(env, args[1], &keepBelow) != napi_ok) {
+    napi_throw_error(env, nullptr, "Expected a desktop-layer boolean"); return nullptr;
   }
   uint32_t id; std::memcpy(&id, bytes, sizeof(id));
   Display* display = XOpenDisplay(nullptr);
@@ -87,7 +104,9 @@ static napi_value Attach(napi_env env, napi_callback_info info) {
   auto* layer = new Layer;
   layer->env = env; layer->display = display; layer->window = window;
   layer->state = XInternAtom(display, "_NET_WM_STATE", False);
-  layer->below = XInternAtom(display, "_NET_WM_STATE_BELOW", False);
+  layer->required = { XInternAtom(display, "_NET_WM_STATE_SKIP_TASKBAR", False),
+    XInternAtom(display, "_NET_WM_STATE_SKIP_PAGER", False) };
+  if (keepBelow) layer->required.push_back(XInternAtom(display, "_NET_WM_STATE_BELOW", False));
   XSelectInput(display, window, StructureNotifyMask | PropertyChangeMask);
   XFlush(display);
   uv_loop_t* loop; napi_get_uv_event_loop(env, &loop);
@@ -99,7 +118,7 @@ static napi_value Attach(napi_env env, napi_callback_info info) {
   napi_add_env_cleanup_hook(env, Dispose, layer);
   uv_poll_start(&layer->poll, UV_READABLE, Events);
   uv_unref(reinterpret_cast<uv_handle_t*>(&layer->poll));
-  EnsureBelow(layer);
+  EnsureState(layer);
   napi_value result; napi_get_boolean(env, true, &result); return result;
 }
 static napi_value Init(napi_env env, napi_value exports) {

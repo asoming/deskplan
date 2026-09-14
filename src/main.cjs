@@ -113,6 +113,7 @@ function updateTray() {
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: tr('显示日序'), click: () => showWindow() },
     { label: tr('随手记'), click: () => showQuickCapture() },
+    { label: tr('设置与备份'), click: () => { showWindow(); win.webContents.send('fourfold:command', 'settings'); } },
     { label: tr('恢复可见'), click: () => { store.saveSettings({ transparency: 35, textTransparency: 0, compactMode: false }); applySettings(); broadcast(); showWindow(); } },
     { label: tr('固定位置'), type: 'checkbox', checked: store.state.settings.positionFixed, click: item => { try { store.saveSettings({ positionFixed: item.checked, windowPosition: 'manual' }); applySettings(); broadcast(); } catch (e) { reportError(e); } } },
     { type: 'separator' }, { label: tr('退出日序'), click: () => { quitting = true; app.quit(); } },
@@ -183,6 +184,7 @@ async function showQuickCapture() {
     quickWin = new BrowserWindow({ width: 540, height: 190, frame: false, resizable: false, alwaysOnTop: false, skipTaskbar: true, show: false,
       title: tr('日序 · 随手记'), backgroundColor: '#f5f7f4', icon: path.join(__dirname, 'assets', 'icon.png'),
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false } });
+    if (process.platform === 'linux') require('./native/build/Release/window_layer.node').attach(quickWin.getNativeWindowHandle(), false);
     quickWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     quickWin.webContents.on('will-navigate', e => e.preventDefault());
     quickWin.on('blur', () => { if (!quickWin.isDestroyed()) quickWin.hide(); });
@@ -319,7 +321,7 @@ async function start(options = {}) {
   const area = (saved ? screen.getDisplayMatching(saved) : screen.getPrimaryDisplay()).workArea;
   const bounds = panelBounds(store.state.settings, saved || area, area);
   win = new BrowserWindow({ ...bounds, show: false, frame: false, transparent: true, backgroundColor: '#00000000',
-    resizable: false, maximizable: false, minimizable: false, fullscreenable: false, hasShadow: true,
+    skipTaskbar: true, resizable: false, maximizable: false, minimizable: false, fullscreenable: false, hasShadow: true,
     title: tr('日序'), icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false, webSecurity: true } });
   const layer = require('./native/build/Release/window_layer.node');
@@ -329,7 +331,9 @@ async function start(options = {}) {
   win.webContents.on('will-attach-webview', event => event.preventDefault());
   if (process.platform === 'win32') win.setAlwaysOnTop(false);
   Menu.setApplicationMenu(null);
-  createTray(); registerIPC(); registerQuickShortcut(); applySettings();
+  createTray();
+  if (process.platform === 'darwin') app.dock.hide();
+  registerIPC(); registerQuickShortcut(); applySettings();
   win.webContents.on('context-menu', (_event, params) => {
     const menu = panelMenu();
     if (params.isEditable) {
@@ -362,7 +366,7 @@ async function start(options = {}) {
   await win.loadFile(indexFile);
   if (!isTest && (!process.argv.includes('--hidden') || !tray)) win.show();
   if (!isTest) updateTimer = setTimeout(() => { if (store.state.settings.autoUpdates) updater.check(); }, 20000);
-  return { window: win, store, downloader, clockCheck, viewState, showQuickCapture, updater, panelMenu, getQuickWindow: () => quickWin };
+  return { window: win, store, downloader, clockCheck, viewState, showQuickCapture, updater, panelMenu, getQuickWindow: () => quickWin, getTray: () => tray };
 }
 
 app.on('will-quit', () => { if (app.isReady()) globalShortcut.unregisterAll(); });
