@@ -227,6 +227,7 @@ function registerIPC() {
     },
     'files:select': async ({ directory = false } = {}) => pickFiles(true, directory),
     'files:pick': async ({ taskId, directory = false }) => { const files = await pickFiles(true, directory); if (files.length) { store.attach(taskId, files); broadcast(); } return files.length; },
+    'files:inspect': async ({ paths }) => inspectPaths(paths),
     'files:drop': async ({ paths, taskId, level }) => {
       const files = inspectPaths(paths);
       const ids = taskId ? (store.attach(taskId, files), [taskId]) : store.createFromFiles(level, files);

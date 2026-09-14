@@ -89,8 +89,11 @@
         <label class="field"><span>重复 <small>完成后生成下一次，跳过已过去的日期</small></span><select id="task-repeat"><option value="none">不重复</option><option value="daily">每天</option><option value="weekdays">每个工作日（周一至周五）</option><option value="weekly">每周</option><option value="monthly">每月</option></select></label>
         <details class="checklist-editor"><summary>子清单 <span id="checklist-progress"></span></summary><label class="field"><span>每行一个步骤，最多 30 项</span><textarea id="task-checklist" rows="3" placeholder="整理资料&#10;写初稿&#10;检查并发送"></textarea></label><div id="checklist-items"></div></details>
         <label class="field"><span>备注 <small>可选</small></span><textarea name="notes" id="task-notes" rows="3" maxlength="5000" placeholder="记下下一步，或需要留意的事"></textarea></label>
+        <section id="attachment-drop" aria-label="关联文件">
         <div class="attachment-header"><span>关联文件 <small id="attachment-count"></small></span><button type="button" id="attach-files" class="text-button"><svg class="icon"><use href="#i-plus"/></svg>添加文件</button><button type="button" id="attach-folder" class="text-button"><svg class="icon"><use href="#i-folder"/></svg>添加文件夹</button></div>
+        <p class="attachment-drop-hint">拖入文件或文件夹，或点击添加</p>
         <div id="attachments" class="attachments"></div>
+        </section>
         <label class="check-field reminder-field"><input type="checkbox" id="task-reminder" name="reminder" checked><span>允许截止提醒 <small>需在设置中开启通知</small></span></label>
         <p id="editor-error" class="form-error" role="alert" hidden></p>
       </div>

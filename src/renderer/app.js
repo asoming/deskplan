@@ -18,6 +18,7 @@
   let state, now = Date.now(), month = new Date(new Date().getFullYear(), new Date().getMonth(), 1), selectedDay = '', draggedId = null;
   let draftChecklist = [];
   let repeatLabels = { daily: tr('每天'), weekdays: tr('工作日'), weekly: tr('每周'), monthly: tr('每月') };
+  let editorSession = 0, pendingAttachments = 0;
   let editingId = null, editorInitial = '', draftFiles = [], availability = new Map(), toastTimer, busy = false;
 
   function toast(text, undo = false) {
@@ -185,6 +186,7 @@
   function editorSignature() { return JSON.stringify({ ...editorValue(), paths: draftFiles.map(f => f.path) }); }
   async function closeEditor() {
     if (!$('#task-dialog').open) return true;
+    if (pendingAttachments) return false;
     if (editorSignature() !== editorInitial) {
       const choice = await ask(tr('保存这次编辑？'), tr('还没有保存的修改将会丢失。'), [{ label: tr('继续编辑'), value: false }, { label: tr('放弃修改'), value: 'discard' }, { label: tr('保存'), value: 'save', primary: true }]);
       if (!choice) return false;
@@ -196,7 +198,7 @@
     closePopovers();
     if (!await closeEditor()) return;
     const t = state.tasks.find(t => t.id === id);
-    editingId = t?.id || null; draftFiles = []; availability = new Map();
+    editorSession++; pendingAttachments = 0; editingId = t?.id || null; draftFiles = []; availability = new Map();
     const source = t || { title: '', notes: '', level: defaults.level ?? 1, due: defaults.due || null, reminder: true, plannedDate: defaults.plannedDate || null, estimatedMinutes: 0, inbox: defaults.inbox || false };
     $('#task-dialog-title').textContent = t ? tr('任务详情') : tr('新建任务');
     $('#task-title').value = source.title; $('#task-level').value = source.level; $('#task-due').value = localTime(source.due); $('#task-notes').value = source.notes; $('#task-reminder').checked = source.reminder;
@@ -225,7 +227,7 @@
     $('#auto-hint').hidden = !(t.level === 1 && effectiveLevel(t, now) === 0);
   }
   async function saveEditor() {
-    if (busy) return false;
+    if (busy || pendingAttachments) return false;
     const form = $('#task-form'); if (!form.reportValidity()) return false;
     const value = editorValue(), previous = state.tasks.find(t => t.id === editingId);
     if (!value.title) { $('#task-title').setCustomValidity(tr('请填写任务名称')); $('#task-title').reportValidity(); return false; }
@@ -363,33 +365,65 @@
   const clearDrag = () => document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
   document.addEventListener('dragover', event => {
     event.preventDefault(); const isFile = Array.from(event.dataTransfer.types).includes('Files');
+    const attachmentTarget = event.target.closest('#attachment-drop');
+    if (attachmentTarget && $('#task-dialog').open) {
+      clearDrag(); event.dataTransfer.dropEffect = isFile ? 'copy' : 'none';
+      if (isFile) attachmentTarget.classList.add('drop-target');
+      return;
+    }
     const target = event.target.closest('[data-schedule],[data-focus-drop],[data-inbox-drop],[data-day],[data-task],[data-level]'); clearDrag();
     if (!target || (!draggedId && !isFile) || (isFile && target.hasAttribute('data-day'))) { event.dataTransfer.dropEffect = 'none'; return; }
     target.classList.add('drop-target'); event.dataTransfer.dropEffect = isFile ? 'copy' : 'move';
   });
   document.addEventListener('dragleave', event => { if (!event.relatedTarget) clearDrag(); });
   document.addEventListener('dragend', () => { draggedId = null; clearDrag(); });
-  const handleDrop = action(async event => {
+  const handleDrop = async (event, files) => {
     clearDrag(); const id = draggedId; draggedId = null;
+    if (event.target.closest('#attachment-drop') && $('#task-dialog').open && files.length) {
+      const session = editorSession, taskId = editingId;
+      $('#editor-error').hidden = true;
+      pendingAttachments++; $('#save-task').disabled = true;
+      try {
+        if (taskId) await api.dropFiles(files, { taskId });
+        else {
+          const inspected = await api.inspectDroppedFiles(files);
+          if (session !== editorSession || !$('#task-dialog').open) return;
+          const key = path => state.native.platform === 'win32' ? path.toLowerCase() : path;
+          const known = new Set(draftFiles.map(file => key(file.path)));
+          for (const file of inspected) if (!known.has(key(file.path))) { draftFiles.push(file); known.add(key(file.path)); }
+        }
+        if (session === editorSession && $('#task-dialog').open) renderAttachments();
+      } catch (e) {
+        if (session === editorSession && $('#task-dialog').open) { $('#editor-error').textContent = e.message; $('#editor-error').hidden = false; }
+        else error(e);
+      } finally {
+        if (session === editorSession) { pendingAttachments--; $('#save-task').disabled = busy || pendingAttachments > 0; }
+      }
+      return;
+    }
     const zone = event.target.closest('[data-level]'), date = event.target.closest('[data-day]');
     const schedule = event.target.closest('[data-schedule]'), focus = event.target.closest('[data-focus-drop]'), inbox = event.target.closest('[data-inbox-drop]');
     const onTask = event.target.closest('[data-task]');
-    if (event.dataTransfer.files.length && onTask && !zone) { await api.dropFiles(Array.from(event.dataTransfer.files), { taskId: onTask.dataset.task }); toast(tr('已关联文件'), true); return; }
+    if (files.length && onTask && !zone) { await api.dropFiles(files, { taskId: onTask.dataset.task }); toast(tr('已关联文件'), true); return; }
     if (id && (schedule || focus)) {
       await call('plan', { id, day: schedule?.dataset.schedule || dateKey(new Date(now)), ...(focus ? { focus: focus.dataset.focusDrop === 'true' } : {}), beforeId: onTask?.dataset.task === id ? undefined : onTask?.dataset.task }); toast(tr('已调整安排，截止时间保持不变'), true); return;
     }
     if (id && inbox) { await call('update', { id, patch: { inbox: true } }); toast(tr('已放回收集箱'), true); return; }
-    if (event.dataTransfer.files.length && zone) {
+    if (files.length && zone) {
       const task = event.target.closest('[data-task]');
-      await api.dropFiles(Array.from(event.dataTransfer.files), { taskId: task?.dataset.task, level: Number(zone.dataset.level) }); toast(task ? tr('已关联文件') : tr('已从文件创建任务'), true); return;
+      await api.dropFiles(files, { taskId: task?.dataset.task, level: Number(zone.dataset.level) }); toast(task ? tr('已关联文件') : tr('已从文件创建任务'), true); return;
     }
     if (id && date) await reschedule(id, date.dataset.day);
     else if (id && zone) {
       const level = Number(zone.dataset.level); await call('update', { id, patch: { level, inbox: false } });
       const task = state.tasks.find(t => t.id === id); toast(task && level === 1 && effectiveLevel(task, Date.now()) === 0 ? tr('距截止不超过 48 小时，仍显示在「马上做」') : tr`已移到「${labels[level]}」`, true);
     }
+  };
+  document.addEventListener('drop', event => {
+    event.preventDefault();
+    // FileList is only readable during the native drop event. Capture it before any async work.
+    handleDrop(event, Array.from(event.dataTransfer.files)).catch(error);
   });
-  document.addEventListener('drop', event => { event.preventDefault(); handleDrop(event); });
   // Pointer capture keeps movement independent of OS title-bar hit testing.
   // It leaves buttons, task dragging, editable fields and native file drops alone.
   let movingPointer = null, moveFrame = 0;

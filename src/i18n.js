@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
   const english = {
+  "关联文件": "Linked files",
+  "拖入文件或文件夹，或点击添加": "Drop files or folders here, or use Add",
   "软件更新": "Software updates",
   "自动检查 GitHub 更新": "Check GitHub automatically",
   "发现正式新版时提示，不自动安装": "Notify about stable releases; do not install automatically",

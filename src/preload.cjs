@@ -13,6 +13,7 @@ function subscribe(channel, callback) {
 }
 contextBridge.exposeInMainWorld('fourfold', {
   call: (name, payload) => { if (!allowed.has(name)) return Promise.reject(new Error('不支持此操作')); return invoke(name, payload); },
+  inspectDroppedFiles: files => invoke('files:inspect', { paths: Array.from(files, file => webUtils.getPathForFile(file)) }),
   dropFiles: (files, target) => invoke('files:drop', { paths: Array.from(files, file => webUtils.getPathForFile(file)), taskId: target.taskId, level: target.level }),
   onActive: callback => subscribe('fourfold:active', callback),
   onCommand: callback => subscribe('fourfold:command', callback),
