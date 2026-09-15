@@ -55,3 +55,7 @@ Fixes cards previously showing only a count such as “0/2” without the actual
 ## 1.0.9 Tray-only presence
 
 Rixu no longer takes up a taskbar or macOS Dock slot. The desktop planning panel remains visible and interactive. On Linux, both the panel and quick capture are also excluded from the window switcher; these hints survive focus, mini mode and hide/show. The system tray provides Show Rixu, Quick capture, Settings and backup, Restore visibility, Fix position and Quit.
+
+## 1.0.10 Show the planner at login
+
+Autostart now displays the desktop panel immediately, without needing Show Rixu from the tray. It does not take focus and keeps its tray-only presence below other apps. Legacy --hidden login entries also show the panel; existing enabled login entries are refreshed on launch without toggling the setting. Tasks, checklists and preferences are preserved.

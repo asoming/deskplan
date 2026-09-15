@@ -41,13 +41,13 @@
 
 | 系统 | 文件 |
 | --- | --- |
-| Debian / Ubuntu，x64 | `Rixu-1.0.9-linux-x64.deb` |
-| 其他 Linux，x64 | `Rixu-1.0.9-linux-x64.tar.gz` |
-| Windows，x64 | `Rixu-1.0.9-windows-x64-setup.exe` |
-| macOS，Apple Silicon | `Rixu-1.0.9-mac-arm64.dmg` 或 `.zip` |
-| macOS，Intel | `Rixu-1.0.9-mac-x64.dmg` 或 `.zip` |
+| Debian / Ubuntu，x64 | `Rixu-1.0.10-linux-x64.deb` |
+| 其他 Linux，x64 | `Rixu-1.0.10-linux-x64.tar.gz` |
+| Windows，x64 | `Rixu-1.0.10-windows-x64-setup.exe` |
+| macOS，Apple Silicon | `Rixu-1.0.10-mac-arm64.dmg` 或 `.zip` |
+| macOS，Intel | `Rixu-1.0.10-mac-x64.dmg` 或 `.zip` |
 
-Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.9-linux-x64.deb`。
+Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.10-linux-x64.deb`。
 
 发行说明会记录实际构建、测试及签名状态。本项目尚未配置开发者代码签名证书：Windows 安装程序未做 Authenticode 签名，macOS 使用临时签名，未进行 Apple 公证。首次打开可能受到系统检查；这与安装包能否构建、应用能否运行是不同的验证项。不要关闭系统的全局安全保护。
 
@@ -127,3 +127,7 @@ Linux 用户目录安装可直接替换并保留旧版本；系统 deb 安装通
 ## 1.0.9 仅保留系统托盘图标
 
 启动后不再占用任务栏或 macOS Dock，桌面计划面板仍正常显示和操作。Linux 同时从窗口切换列表隐藏主面板和快捷记录窗口；点击、切换小窗、隐藏再显示后仍保持生效。系统托盘保留显示日序、随手记、设置与备份、恢复可见、固定位置和退出入口。
+
+## 1.0.10 开机直接显示桌面计划
+
+开机自启动后直接显示桌面面板，无需通过托盘手动显示。启动时不抢焦点，继续只保留托盘图标，面板位于其他应用下方。兼容旧版带 --hidden 的启动项；已启用自启动的用户打开新版后会自动刷新启动项，无需重新设置。任务、子清单及个性化设置保留。

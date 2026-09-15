@@ -39,7 +39,7 @@ let win, tray, store, quitting = false, timer, lastCheck = Date.now(), lastLevel
 function viewState() {
   return {
     ...store.snapshot(), updates: updateState(), canUndo: store.history.length > 0, recoveryNotice: tr(store.recoveryNotice),
-    native: { panelActive: !!win?.isFocused(), platform: process.platform, notificationsSupported: Notification.isSupported(), trayAvailable: !!tray,
+    native: { panelVisible: !!win?.isVisible(), panelActive: !!win?.isFocused(), platform: process.platform, notificationsSupported: Notification.isSupported(), trayAvailable: !!tray,
       quickShortcutRegistered: quickRegistered, version: require('../package.json').version,
       autoStartSupported: process.platform !== 'linux' || app.isPackaged },
   };
@@ -48,6 +48,7 @@ function broadcastUpdates() { if (win && !win.isDestroyed()) win.webContents.sen
 function broadcast() { if (win && !win.isDestroyed()) win.webContents.send('fourfold:state', viewState()); }
 function message(text) { if (win && !win.isDestroyed()) win.webContents.send('fourfold:message', text); }
 function showWindow(taskId) { if (taskId && store.state.settings.compactMode) { store.saveSettings({ compactMode: false }); applySettings(); broadcast(); } if (!win || win.isDestroyed()) return; win.show(); if (win.isMinimized()) win.restore(); win.focus(); if (taskId) win.webContents.send('fourfold:locate', taskId); }
+function showInitialWindow() { if (win && !win.isDestroyed()) win.showInactive(); }
 function reportError(error) { console.error(error); message(tr(error.message) || tr('操作未完成，请重试')); }
 function taskFile(taskId, fileId) {
   const task = store.state.tasks.find(t => t.id === taskId), file = task?.files.find(f => f.id === fileId);
@@ -93,9 +94,9 @@ function setAutoStart(enabled) {
     fs.mkdirSync(folder, { recursive: true });
     if (enabled) {
       const executable = process.execPath.replace(/["\\`$]/g, '\\$&');
-      atomicWrite(file, `[Desktop Entry]\nType=Application\nName=日序\nExec="${executable}" --hidden\nTerminal=false\nX-GNOME-Autostart-enabled=true\n`);
+      atomicWrite(file, `[Desktop Entry]\nType=Application\nName=日序\nExec="${executable}" --autostart\nTerminal=false\nX-GNOME-Autostart-enabled=true\n`);
     } else if (fs.existsSync(file)) fs.unlinkSync(file);
-  } else app.setLoginItemSettings({ openAtLogin: enabled, args: ['--hidden'] });
+  } else app.setLoginItemSettings({ openAtLogin: enabled, args: ['--autostart'] });
 }
 function updateApplicationMenu() {
   if (process.platform !== 'darwin') return;
@@ -304,7 +305,10 @@ async function installUpdate() {
 
 async function start(options = {}) {
   if (!isTest && !app.requestSingleInstanceLock()) { app.quit(); return; }
-  app.on('second-instance', () => showWindow());
+  app.on('second-instance', (_event, argv) => {
+    if (argv.includes('--autostart') || argv.includes('--hidden')) showInitialWindow();
+    else showWindow();
+  });
   await app.whenReady();
   store = new Store(app.getPath('userData'));
   updater = new UpdateChecker({ version: require('../package.json').version, fetch: isTest && options.updateFetch ? options.updateFetch : (...args) => net.fetch(...args), latestURL: () => latestReleaseURL(net), cacheFile: path.join(app.getPath('userData'), 'updates.json'), onChange: broadcastUpdates });
@@ -364,9 +368,15 @@ async function start(options = {}) {
   lastLevels = new Map(store.state.tasks.map(t => [t.id, effectiveLevel(t)]));
   timer = setInterval(clockCheck, 60_000);
   await win.loadFile(indexFile);
-  if (!isTest && (!process.argv.includes('--hidden') || !tray)) win.show();
+  // Older login entries still pass --hidden. They now open the same visible panel.
+  if (!isTest) {
+    showInitialWindow();
+    if (app.isPackaged && store.state.settings.autoStart) {
+      try { setAutoStart(true); } catch (error) { console.warn('Autostart registration:', error.message); }
+    }
+  }
   if (!isTest) updateTimer = setTimeout(() => { if (store.state.settings.autoUpdates) updater.check(); }, 20000);
-  return { window: win, store, downloader, clockCheck, viewState, showQuickCapture, updater, panelMenu, getQuickWindow: () => quickWin, getTray: () => tray };
+  return { window: win, store, downloader, clockCheck, viewState, showQuickCapture, updater, panelMenu, getQuickWindow: () => quickWin, getTray: () => tray, showInitialWindow };
 }
 
 app.on('will-quit', () => { if (app.isReady()) globalShortcut.unregisterAll(); });

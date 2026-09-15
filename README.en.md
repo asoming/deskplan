@@ -41,13 +41,13 @@ Get the matching asset from [GitHub Releases](https://github.com/asoming/rixu/re
 
 | Platform | Asset |
 | --- | --- |
-| Debian / Ubuntu x64 | `Rixu-1.0.9-linux-x64.deb` |
-| Other Linux x64 | `Rixu-1.0.9-linux-x64.tar.gz` |
-| Windows x64 | `Rixu-1.0.9-windows-x64-setup.exe` |
-| macOS Apple Silicon | `Rixu-1.0.9-mac-arm64.dmg` or `.zip` |
-| macOS Intel | `Rixu-1.0.9-mac-x64.dmg` or `.zip` |
+| Debian / Ubuntu x64 | `Rixu-1.0.10-linux-x64.deb` |
+| Other Linux x64 | `Rixu-1.0.10-linux-x64.tar.gz` |
+| Windows x64 | `Rixu-1.0.10-windows-x64-setup.exe` |
+| macOS Apple Silicon | `Rixu-1.0.10-mac-arm64.dmg` or `.zip` |
+| macOS Intel | `Rixu-1.0.10-mac-x64.dmg` or `.zip` |
 
-Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.9-linux-x64.deb`.
+Use the Windows installer, drag the macOS app into Applications, or install the Debian package with your software manager / `sudo apt install ./Rixu-1.0.10-linux-x64.deb`.
 
 Release notes record actual build, test and signing status. Developer signing certificates are not configured: Windows builds are not Authenticode-signed; macOS builds are ad-hoc signed and not Apple-notarized. Operating-system checks may appear on first launch. Do not disable global operating-system security protections.
 
@@ -125,3 +125,7 @@ Fixes cards previously showing only a count such as “0/2” without the actual
 ## 1.0.9 Tray-only presence
 
 Rixu no longer takes up a taskbar or macOS Dock slot. The desktop planning panel remains visible and interactive. On Linux, both the panel and quick capture are also excluded from the window switcher; these hints survive focus, mini mode and hide/show. The system tray provides Show Rixu, Quick capture, Settings and backup, Restore visibility, Fix position and Quit.
+
+## 1.0.10 Show the planner at login
+
+Autostart now displays the desktop panel immediately, without needing Show Rixu from the tray. It does not take focus and keeps its tray-only presence below other apps. Legacy --hidden login entries also show the panel; existing enabled login entries are refreshed on launch without toggling the setting. Tasks, checklists and preferences are preserved.

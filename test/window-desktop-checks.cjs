@@ -60,7 +60,7 @@ module.exports=async function checkWindow(runtime,js,call){
  await call('settings',{alwaysOnTop:true});assert.equal(win.isAlwaysOnTop(),false);
  // Background deadlines must not steal focus from another ordinary application window.
  const other=new BrowserWindow({width:300,height:200,show:true});
- try { other.focus();await sleep(150);assert.equal(other.isFocused(),true);runtime.clockCheck();await sleep(100);assert.equal(other.isFocused(),true);assert.equal(win.isAlwaysOnTop(),false); }
+ try { other.focus();await sleep(150);assert.equal(other.isFocused(),true);win.hide();runtime.showInitialWindow();await sleep(150);assert.equal(win.isVisible(),true);assert.equal(other.isFocused(),true,'startup reveals panel without taking focus');for(const arg of ['--autostart','--hidden']){win.hide();app.emit('second-instance',{},[process.execPath,arg]);await sleep(100);assert.equal(win.isVisible(),true);assert.equal(other.isFocused(),true,'repeated login launch preserves focus');}runtime.clockCheck();await sleep(100);assert.equal(other.isFocused(),true);assert.equal(win.isAlwaysOnTop(),false); }
  finally { other.destroy(); }
  const desktop = process.platform==='linux' ? new BrowserWindow({type:'desktop',x:area.x,y:area.y,width:area.width,height:area.height,frame:false,show:true}) : null;
  const covering = new BrowserWindow({x:area.x,y:area.y,width:320,height:240,show:true});

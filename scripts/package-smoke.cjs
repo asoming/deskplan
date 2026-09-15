@@ -8,7 +8,7 @@ function findExecutable() {
  return path.join(folder,fs.readdirSync(folder).find(n=>!n.startsWith('.')));
 }
 const binary=process.argv[2]||findExecutable(),reopening=!!process.env.RIXU_SMOKE_REOPEN_DIR,directory=process.env.RIXU_SMOKE_REOPEN_DIR||fs.mkdtempSync(path.join(os.tmpdir(),'rixu-package-'));
-const flags=['--remote-debugging-port=0'];if(process.env.RIXU_CI_NO_SANDBOX==='1')flags.push('--no-sandbox');
+const flags=['--remote-debugging-port=0',reopening?'--hidden':'--autostart'];if(process.env.RIXU_CI_NO_SANDBOX==='1')flags.push('--no-sandbox');
 const child=spawn(binary,flags,{env:{...process.env,RIXU_DATA_DIR:directory},stdio:['ignore','pipe','pipe']});
 let buffer='',socket,seq=0,finished=false;const pending=new Map();
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -28,6 +28,8 @@ async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expres
  assert.ok(page,'packaged renderer page');socket=new WebSocket(page.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});
  socket.addEventListener('message',e=>{const data=JSON.parse(e.data),item=pending.get(data.id);if(!item)return;pending.delete(data.id);data.error?item.reject(Error(JSON.stringify(data.error))):item.resolve(data.result);});
  for(let i=0;i<100;i++){if(await evaluate('!!window.fourfold && document.querySelectorAll(".zone").length===4'))break;await sleep(100);}
+ for(let i=0;i<60;i++){if(await evaluate('window.fourfold.call("state").then(s=>s.native.panelVisible)'))break;await sleep(50);}
+ assert.equal(await evaluate('window.fourfold.call("state").then(s=>s.native.panelVisible)'),true,reopening?'legacy autostart shows panel':'autostart shows panel');
  if(process.platform==='linux') {
   const windows=execFileSync('xprop',['-root','_NET_CLIENT_LIST'],{encoding:'utf8'}).match(/0x[0-9a-f]+/g)||[];
   const own=windows.find(id=>{const pid=execFileSync('xprop',['-id',id,'_NET_WM_PID'],{encoding:'utf8'});return Number(pid.match(/= (\d+)/)?.[1])===child.pid;});
@@ -52,7 +54,7 @@ async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expres
  const saved=JSON.parse(fs.readFileSync(path.join(directory,'tasks.json'),'utf8'));assert.equal(saved.tasks[0].title,'Packaged save / 正式包保存');assert.equal(saved.schemaVersion,3);assert.equal(saved.settings.language,'en');
  assert.deepEqual(saved.tasks[0].checklist.map(i=>({text:i.text,done:i.done})),[{text:'准备资料',done:true},{text:'检查结果',done:false}]);
  assert.deepEqual(await evaluate('[...document.querySelectorAll("#board .card-step span")].map(e=>e.textContent)'),['准备资料','检查结果']);
- const result={passed:true,platform:process.platform,arch:process.arch,version:initial.native.version,checks:['packaged executable','asar preload and renderer','packaged integrations','Linux taskbar hidden / macOS background app metadata','UI create','durable schema 3 save','checklist steps visible and toggled in packaged app; retained after restart','clean exit'],sandbox:!flags.includes('--no-sandbox')};
+ const result={passed:true,platform:process.platform,arch:process.arch,version:initial.native.version,checks:['packaged executable','asar preload and renderer','packaged integrations','visible on autostart and legacy hidden startup','Linux taskbar hidden / macOS background app metadata','UI create','durable schema 3 save','checklist steps visible and toggled in packaged app; retained after restart','clean exit'],sandbox:!flags.includes('--no-sandbox')};
  finished=true;evaluate('window.fourfold.call("window:quit")').catch(()=>{});const ended=await exit;assert.equal(ended.code,0);socket.close();clearTimeout(timeout);
  if (reopening) return;
  execFileSync(process.execPath,[__filename,binary],{env:{...process.env,RIXU_SMOKE_REOPEN_DIR:directory},stdio:'inherit',timeout:90000});
