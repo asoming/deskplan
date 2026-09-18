@@ -11,7 +11,7 @@ const seed=new Store(temporary),today=dateKey(new Date());
 const a=seed.create({title:cn?'准备周五的分享':'Prepare Friday’s presentation',level:1,due:new Date(Date.now()+3*86400000).toISOString(),plannedDate:today,estimatedMinutes:45});
 const b=seed.create({title:cn?'读完下一章':'Read the next chapter',level:2,plannedDate:today,estimatedMinutes:20});
 seed.create({title:cn?'收集周末出游灵感':'Collect weekend trip ideas',level:3});seed.plan(a,{day:today,focus:true});seed.plan(b,{day:today,focus:true});
-seed.saveSettings({language:lang,theme:'light',view:'quadrants',windowFixed:false,windowPosition:'manual',transparency:0,textTransparency:0,desktopBlend:false,quietControls:false,calendarOpen:false,quickCapture:false,autoCheckUpdates:false});
+seed.saveSettings({language:lang,theme:'light',view:'quadrants',windowSize:'normal',windowFixed:false,windowPosition:'manual',transparency:0,textTransparency:0,desktopBlend:false,quietControls:false,calendarOpen:false,quickCapture:false,autoCheckUpdates:false});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
  const runtime=await require('../src/main.cjs').start(),win=runtime.window;win.setBounds({x:50,y:50,width:980,height:600});win.show();
@@ -38,7 +38,7 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
  await call('update',{id:dropped.id,patch:{due:new Date(Date.now()+10*3600000).toISOString(),plannedDate:today,estimatedMinutes:30,checklist:[{id:require('node:crypto').randomUUID(),text:cn?'整理资料':'Gather notes',done:true},{id:require('node:crypto').randomUUID(),text:cn?'检查并发送':'Review and send',done:false}]}});
  await pause(2500);await shot(cn?'截止时间与步骤，一眼看清':'Deadlines and steps, at a glance',2300,true);
  await call('settings',{view:'today'});await shot(cn?'今天，先做好最重要的事':'Today: start with what matters',2200);
- await call('settings',{view:'week'});await shot(cn?'本周，给每件事安排时间':'This week: give each task a day',2200);
+ await call('plan',{id:b,day:dateKey(new Date(Date.now()+86400000))});await call('settings',{view:'week'});await shot(cn?'本周，给每件事安排时间':'This week: give each task a day',2200);
  await call('settings',{view:'quadrants'});await call('current',{id:dropped.id});await call('window:compact',{enabled:true});await shot(cn?'缩成小窗，留出工作空间':'Go small. Leave room to work.',2200);
  await call('window:compact',{enabled:false});await shot(cn?'无需账号，离线可用':'No account. Works offline.',2200);
  fs.writeFileSync(path.join(out,'frames.json'),JSON.stringify(shots,null,2));console.log(JSON.stringify({passed:true,language:lang,frames:shots.length,duration:shots.reduce((n,s)=>n+s.duration,0),directory:out}));app.exit(0);
