@@ -9,7 +9,7 @@ on:
       version:
         description: Release version
         required: true
-        default: '1.0.10'
+        default: '1.0.11'
         type: string
 permissions:
   contents: write
@@ -54,7 +54,7 @@ jobs:
           version=os.environ['VERSION'];out=pathlib.Path('release');out.mkdir()
           files=list(pathlib.Path('artifacts').glob('release-*/*'))
           suffixes=['linux-x64.deb','linux-x64.tar.gz','windows-x64-setup.exe','mac-arm64.dmg','mac-arm64.zip','mac-x64.dmg','mac-x64.zip']
-          assert len(files)==7 and {p.name for p in files}=={f'Rixu-{version}-{s}' for s in suffixes}
+          assert len(files)==7 and {p.name for p in files}=={f'DeskPlan-{version}-{s}' for s in suffixes}
           checks=[]
           for p in sorted(files,key=lambda p:p.name):
               assert p.is_file() and p.stat().st_size>10_000_000
@@ -66,17 +66,17 @@ jobs:
           for p in reports:
               report=json.loads(p.read_text());assert report['passed'] is True
               if 'sandbox' in report:assert report['sandbox'] is True
-          with zipfile.ZipFile(out/f'Rixu-{version}-test-reports.zip','w',zipfile.ZIP_DEFLATED) as z:
+          with zipfile.ZipFile(out/f'DeskPlan-{version}-test-reports.zip','w',zipfile.ZIP_DEFLATED) as z:
               z.write('workflow.json','workflow.json')
               for p in sorted(reports):z.write(p,p.relative_to('evidence'))
           r=json.load(open('workflow.json'))
-          lines=[f'# Rixu {version} / 日序发行验证', '', f'Commit: `{r["headSha"]}`', '', f'[Four-platform validation]({r["url"]})', '', 'All four platform jobs passed. Includes native language switching and packaged/installed process restart tests with the sandbox enabled.', '', '四个平台均通过，包含应用内语言切换、任务与草稿保留、打包与安装后重启测试。', '', 'Windows is unsigned; macOS is ad-hoc signed and not notarized. OS-native controls may follow the system language.']
+          lines=[f'# DeskPlan {version} / 日序发行验证', '', f'Commit: `{r["headSha"]}`', '', f'[Four-platform validation]({r["url"]})', '', 'All four platform jobs passed. Includes native language switching and packaged/installed process restart tests with the sandbox enabled.', '', '四个平台均通过，包含应用内语言切换、任务与草稿保留、打包与安装后重启测试。', '', 'Windows is unsigned; macOS is ad-hoc signed and not notarized. OS-native controls may follow the system language.']
           (out/'RELEASE-VERIFICATION.md').write_text('\n'.join(lines)+'\n')
-          shutil.copy2('docs/PRD.zh-CN.md',out/f'Rixu-{version}-PRD.zh-CN.md')
+          shutil.copy2('docs/PRD.zh-CN.md',out/f'DeskPlan-{version}-PRD.zh-CN.md')
           PY
       - name: Publish release
         run: |
-          gh release create "v$VERSION" release/* --target "$VERIFIED_SHA" --title "日序 · Rixu $VERSION" --notes-file "docs/releases/$VERSION.md" --latest
+          gh release create "v$VERSION" release/* --target "$VERIFIED_SHA" --title "日序 · DeskPlan $VERSION" --notes-file "docs/releases/$VERSION.md" --latest
           gh release view "v$VERSION" --json url,isDraft,isPrerelease,assets > published.json
           python3 - <<'PY'
           import json

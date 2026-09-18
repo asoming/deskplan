@@ -4,12 +4,12 @@ const { atomicWrite } = require('./store.cjs');
 const { newer } = require('./updates.cjs');
 const limit = 1024 * 1024 * 1024;
 const activeStates = new Set(['downloading', 'verifying', 'preparing', 'installing']);
-const base = 'https://github.com/asoming/rixu/releases/download/';
+const base = 'https://github.com/asoming/deskplan/releases/download/';
 function assetName(version, kind, arch = process.arch) {
   if (!newer(version, '0.0.0')) throw Error('更新版本无效');
   const suffix = { local: 'linux-x64.tar.gz', deb: 'linux-x64.deb', nsis: 'windows-x64-setup.exe', mac: `mac-${arch}.dmg` }[kind];
   if (!suffix || !['x64', 'arm64'].includes(arch) || (kind !== 'mac' && arch !== 'x64')) throw Error('暂不支持此系统的应用内更新');
-  return `Rixu-${version}-${suffix}`;
+  return `DeskPlan-${version}-${suffix}`;
 }
 async function digest(file) {
   const hash = createHash('sha256');

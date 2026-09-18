@@ -94,7 +94,7 @@ function setAutoStart(enabled) {
     fs.mkdirSync(folder, { recursive: true });
     if (enabled) {
       const executable = process.execPath.replace(/["\\`$]/g, '\\$&');
-      atomicWrite(file, `[Desktop Entry]\nType=Application\nName=日序\nExec="${executable}" --autostart\nTerminal=false\nX-GNOME-Autostart-enabled=true\n`);
+      atomicWrite(file, `[Desktop Entry]\nType=Application\nName=日序\nName[en]=DeskPlan\nExec="${executable}" --autostart\nTerminal=false\nX-GNOME-Autostart-enabled=true\n`);
     } else if (fs.existsSync(file)) fs.unlinkSync(file);
   } else app.setLoginItemSettings({ openAtLogin: enabled, args: ['--autostart'] });
 }
@@ -257,7 +257,7 @@ function registerIPC() {
       else { const error = await shell.openPath(file.path); if (error) throw new Error(tr`无法打开文件：${error}`); }
     },
     'export:csv': async () => {
-      const result = await dialog.showSaveDialog(win, { title: tr('导出任务表格'), buttonLabel: tr('保存'), defaultPath: 'Rixu-tasks.csv', filters: [{ name: 'CSV', extensions: ['csv'] }] });
+      const result = await dialog.showSaveDialog(win, { title: tr('导出任务表格'), buttonLabel: tr('保存'), defaultPath: 'DeskPlan-tasks.csv', filters: [{ name: 'CSV', extensions: ['csv'] }] });
       if (result.canceled || !result.filePath) return false;
       atomicWrite(result.filePath, exportCSV(store.state.tasks)); return true;
     },

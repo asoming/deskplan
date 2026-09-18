@@ -1,13 +1,19 @@
 <p align="center"><img src="src/assets/icon-128.png" width="88" alt="日序图标"></p>
-<h1 align="center">日序 · Rixu</h1>
+<h1 align="center">日序 · DeskPlan</h1>
 <p align="center">让计划留在桌面，让注意力留给今天。</p>
-<p align="center"><a href="README.en.md">English</a> · <a href="https://github.com/asoming/rixu/releases/latest">下载正式版</a> · <a href="docs/INTRO.zh-CN.md">产品介绍</a> · <a href="docs/RESEARCH.zh-CN.md">用户痛点调研</a></p>
+<p align="center"><a href="README.en.md">English</a> · <a href="https://github.com/asoming/deskplan/releases/latest">下载正式版</a> · <a href="docs/INTRO.zh-CN.md">产品介绍</a> · <a href="docs/RESEARCH.zh-CN.md">用户痛点调研</a></p>
 
 日序是一个简洁、本地优先的桌面计划软件。今天、本周、紧急程度四象限和收集箱共用同一份任务；你可以拖入文件、安排日期、调整透明度，再把它缩成不会置顶的小窗。
 
 无需账号，离线可用。没有广告、遥测或后台云同步。应用与文档都支持中文和英文。点击「左侧设置图标 → 设置与备份 → 语言 / Language」即可即时切换，选择会自动保存。任务、备注与文件名不会被翻译。
 
 ![日序桌面融合模式](docs/images/desktop-blend.png)
+
+## 1.0.11 英文名 DeskPlan
+
+英文名改为 **DeskPlan**，突出桌面任务规划；中文继续使用“日序”。英文窗口、托盘、快捷记录、备份名称、文档及安装包统一采用新名称。GitHub 仓库改为 [asoming/deskplan](https://github.com/asoming/deskplan)，新版检测和下载更新使用新地址。
+
+**旧版升级：** 1.0.10 及以前版本的更新器使用固定的旧仓库地址，改名后请从[新仓库正式版页面](https://github.com/asoming/deskplan/releases/latest)手动下载安装一次新版，无需卸载旧版。之后可继续在应用内更新。原安装标识和数据目录保留，任务、附件路径、语言、自启动及其他设置不变。
 
 ## 让桌面保持安静
 
@@ -37,17 +43,17 @@
 
 ## 下载
 
-在 [GitHub Releases](https://github.com/asoming/rixu/releases/latest) 选择你的系统：
+在 [GitHub Releases](https://github.com/asoming/deskplan/releases/latest) 选择你的系统：
 
 | 系统 | 文件 |
 | --- | --- |
-| Debian / Ubuntu，x64 | `Rixu-1.0.10-linux-x64.deb` |
-| 其他 Linux，x64 | `Rixu-1.0.10-linux-x64.tar.gz` |
-| Windows，x64 | `Rixu-1.0.10-windows-x64-setup.exe` |
-| macOS，Apple Silicon | `Rixu-1.0.10-mac-arm64.dmg` 或 `.zip` |
-| macOS，Intel | `Rixu-1.0.10-mac-x64.dmg` 或 `.zip` |
+| Debian / Ubuntu，x64 | `DeskPlan-1.0.11-linux-x64.deb` |
+| 其他 Linux，x64 | `DeskPlan-1.0.11-linux-x64.tar.gz` |
+| Windows，x64 | `DeskPlan-1.0.11-windows-x64-setup.exe` |
+| macOS，Apple Silicon | `DeskPlan-1.0.11-mac-arm64.dmg` 或 `.zip` |
+| macOS，Intel | `DeskPlan-1.0.11-mac-x64.dmg` 或 `.zip` |
 
-Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./Rixu-1.0.10-linux-x64.deb`。
+Windows 使用安装向导；macOS 把 App 拖入 Applications；Debian/Ubuntu 可使用软件安装器或 `sudo apt install ./DeskPlan-1.0.11-linux-x64.deb`。
 
 发行说明会记录实际构建、测试及签名状态。本项目尚未配置开发者代码签名证书：Windows 安装程序未做 Authenticode 签名，macOS 使用临时签名，未进行 Apple 公证。首次打开可能受到系统检查；这与安装包能否构建、应用能否运行是不同的验证项。不要关闭系统的全局安全保护。
 
@@ -84,7 +90,7 @@ npm run test:package   # 运行刚打包的 App
 
 暂不包含账号、云同步、团队协作、自然语言解析和系统日历双向同步。Linux 桌面定位依赖窗口管理器，通过 X11/XWayland 运行。多系统构建和自动化测试不替代每个桌面环境、系统权限和通知服务的人工验证。
 
-反馈请使用 [Issues](https://github.com/asoming/rixu/issues)。源代码公开可供查看；当前未授予开源许可证，版权归作者所有。第三方组件适用各自许可证。
+反馈请使用 [Issues](https://github.com/asoming/deskplan/issues)。源代码公开可供查看；当前未授予开源许可证，版权归作者所有。第三方组件适用各自许可证。
 
 ## 右上角停靠与固定位置（1.0.2）
 

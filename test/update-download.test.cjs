@@ -10,9 +10,9 @@ function fixture(t, options={}) {
  return new UpdateDownload({directory,version:'1.0.6',kind:'local',arch:'x64',request,...options});
 }
 test('update packages match platform and architecture; remote paths stay on GitHub release assets',()=>{
- assert.equal(assetName('1.0.7','mac','arm64'),'Rixu-1.0.7-mac-arm64.dmg');assert.match(assetName('1.0.7','nsis','x64'),/windows-x64-setup.exe$/);
+ assert.equal(assetName('1.0.7','mac','arm64'),'DeskPlan-1.0.7-mac-arm64.dmg');assert.match(assetName('1.0.7','nsis','x64'),/windows-x64-setup.exe$/);
  assert.throws(()=>assetName('../escape','local','x64'));assert.throws(()=>assetName('1.0.7','deb','arm64'));
- for(const url of ['file:///tmp/a','https://github.com/evil/repo/a','https://github.com.evil.test/asoming/rixu/releases/download/a','https://user@github.com/asoming/rixu/releases/download/a'])assert.equal(trustedAssetURL(url),false);
+ for(const url of ['file:///tmp/a','https://github.com/evil/repo/a','https://github.com.evil.test/asoming/deskplan/releases/download/a','https://user@github.com/asoming/deskplan/releases/download/a'])assert.equal(trustedAssetURL(url),false);
  assert.equal(trustedAssetURL('https://release-assets.githubusercontent.com/a?token=x'),true);
  assert.throws(()=>checksumFor(`${sum}  a\n${sum}  a`,'a'));assert.throws(()=>checksumFor('bad','a'));
 });

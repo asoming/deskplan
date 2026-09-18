@@ -50,7 +50,7 @@ async function evaluate(expression){const r=await rpc('Runtime.evaluate',{expres
  for(let i=0;i<100;i++){if(await evaluate('document.documentElement.lang==="en-US"'))break;await sleep(50);}
  } else { assert.equal(initial.settings.language,'en'); }
  assert.equal(await evaluate('document.documentElement.lang'),'en-US');
- assert.equal(await evaluate('document.title'),'Rixu');
+ assert.equal(await evaluate('document.title'),'DeskPlan');
  const saved=JSON.parse(fs.readFileSync(path.join(directory,'tasks.json'),'utf8'));assert.equal(saved.tasks[0].title,'Packaged save / 正式包保存');assert.equal(saved.schemaVersion,3);assert.equal(saved.settings.language,'en');
  assert.deepEqual(saved.tasks[0].checklist.map(i=>({text:i.text,done:i.done})),[{text:'准备资料',done:true},{text:'检查结果',done:false}]);
  assert.deepEqual(await evaluate('[...document.querySelectorAll("#board .card-step span")].map(e=>e.textContent)'),['准备资料','检查结果']);

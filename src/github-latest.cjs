@@ -3,7 +3,7 @@
 // lets us read GitHub's official latest-release redirect without downloading HTML.
 function latestReleaseURL(net) {
   return new Promise((resolve, reject) => {
-    const request = net.request({ url: 'https://github.com/asoming/rixu/releases/latest', method: 'HEAD', redirect: 'manual', credentials: 'omit', useSessionCookies: false });
+    const request = net.request({ url: 'https://github.com/asoming/deskplan/releases/latest', method: 'HEAD', redirect: 'manual', credentials: 'omit', useSessionCookies: false });
     let settled = false;
     const finish = (error, url) => {
       if (settled) return;

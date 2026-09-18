@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('node:fs');
 const { atomicWrite } = require('./store.cjs');
-const endpoint = 'https://api.github.com/repos/asoming/rixu/releases/latest';
+const endpoint = 'https://api.github.com/repos/asoming/deskplan/releases/latest';
 const interval = 6 * 60 * 60 * 1000;
 function versionParts(value) {
   const match = /^v?(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})$/.exec(value || '');
@@ -16,7 +16,7 @@ function newer(candidate, current) {
 function releaseInfo(data, current) {
   if (!data || data.draft !== false || data.prerelease !== false || !versionParts(data.tag_name)) throw Error('更新信息无效，请稍后重试');
   if (!newer(data.tag_name, current)) return null;
-  return { version: data.tag_name.replace(/^v/, ''), url: `https://github.com/asoming/rixu/releases/tag/${data.tag_name}` };
+  return { version: data.tag_name.replace(/^v/, ''), url: `https://github.com/asoming/deskplan/releases/tag/${data.tag_name}` };
 }
 class UpdateChecker {
   constructor({ version, fetch, latestURL, cacheFile, onChange = () => {}, now = Date.now }) {
@@ -47,7 +47,7 @@ class UpdateChecker {
       let data;
       if (!response.ok && [403, 429].includes(response.status) && this.latestURL) {
         const url = await this.latestURL();
-        const tag = /^https:\/\/github\.com\/asoming\/rixu\/releases\/tag\/([^/?#]+)$/.exec(url)?.[1];
+        const tag = /^https:\/\/github\.com\/asoming\/deskplan\/releases\/tag\/([^/?#]+)$/.exec(url)?.[1];
         data = { tag_name: tag, draft: false, prerelease: false };
       } else {
         if (!response.ok) throw Error(response.status === 403 || response.status === 429 ? '检测过于频繁，请稍后重试' : '无法连接 GitHub，请检查网络后重试');

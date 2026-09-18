@@ -94,11 +94,11 @@ jobs:
           name: release-${{ matrix.platform }}-${{ matrix.arch }}
           if-no-files-found: error
           path: |
-            dist/Rixu-*.deb
-            dist/Rixu-*.tar.gz
-            dist/Rixu-*.exe
-            dist/Rixu-*.dmg
-            dist/Rixu-*.zip
+            dist/DeskPlan-*.deb
+            dist/DeskPlan-*.tar.gz
+            dist/DeskPlan-*.exe
+            dist/DeskPlan-*.dmg
+            dist/DeskPlan-*.zip
       - name: Upload test evidence
         if: always()
         uses: actions/upload-artifact@v4

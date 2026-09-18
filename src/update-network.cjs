@@ -1,7 +1,7 @@
 'use strict';
 const allowedHosts = new Set(['github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com']);
 function trustedAssetURL(value) {
-  try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password && !u.port && allowedHosts.has(u.hostname) && (u.hostname !== 'github.com' || u.pathname.startsWith('/asoming/rixu/releases/download/')); } catch { return false; }
+  try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password && !u.port && allowedHosts.has(u.hostname) && (u.hostname !== 'github.com' || u.pathname.startsWith('/asoming/deskplan/releases/download/')); } catch { return false; }
 }
 function requestAsset(net, url, signal) {
   if (!trustedAssetURL(url)) return Promise.reject(Error('更新下载地址无效'));

@@ -31,14 +31,14 @@ desktop.write_text('''[Desktop Entry]
 Type=Application
 Version=1.0
 Name=日序
-Name[en]=Rixu
+Name[en]=DeskPlan
 GenericName=桌面计划
 Comment=今天、本周、四象限与快捷记录
 Exec=/opt/rixu/rixu
 Icon=rixu
 Terminal=false
 Categories=Office;
-Keywords=任务;计划;日序;Rixu;Todo;Calendar;
+Keywords=任务;计划;日序;DeskPlan;Todo;Calendar;
 StartupNotify=true
 StartupWMClass=io.rixu
 ''')
@@ -56,10 +56,10 @@ Version: {version}
 Section: utils
 Priority: optional
 Architecture: amd64
-Maintainer: Rixu local build <noreply@localhost>
+Maintainer: DeskPlan local build <noreply@localhost>
 Installed-Size: {size_kb}
 Depends: libgtk-3-0 | libgtk-3-0t64, libnss3, libgbm1, libasound2 | libasound2t64, libxss1, libx11-6, libxkbcommon0
-Description: Rixu desktop task planner
+Description: DeskPlan desktop task planner
  A local desktop planner with urgency quadrants, file attachments,
  calendar scheduling, reminders and adjustable background transparency.
 ''')

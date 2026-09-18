@@ -1,6 +1,6 @@
-# Rixu: a quiet place for your plan
+# DeskPlan: tasks, priorities and weekly planning on your desktop
 
-Rixu addresses a small, familiar need: you do not want to open a complex project-management system. You want to see what to do now, how the week is arranged, and what is approaching its deadline.
+DeskPlan addresses a small, familiar need: you do not want to open a complex project-management system. You want to see what to do now, how the week is arranged, and what is approaching its deadline.
 
 Four colored zones express handling priority: Now, Soon, Planned and Later. These are four priority tiers, not a two-axis importance matrix. Deadline labels change color as time runs out; Soon tasks move visually into Now with 48 hours or less remaining.
 
@@ -8,15 +8,15 @@ Switch to Today when it is time to act, placing up to three priorities at the to
 
 Capture a thought with a global shortcut, press Enter, and return to your work. Drop files onto tasks. Break a larger task into checklist steps, repeat routine work, or snooze a reminder without changing the deadline.
 
-Rixu can become a quiet layer on your desktop: subtle borders, independent text and background transparency, sidebar icons that appear on sidebar hover, and a mini window containing the current task and the next two. Minimalism should not mean losing access to your controls.
+DeskPlan can become a quiet layer on your desktop: subtle borders, independent text and background transparency, sidebar icons that appear on sidebar hover, and a mini window containing the current task and the next two. Minimalism should not mean losing access to your controls.
 
 Your tasks live on your computer. There is no account requirement; the app works offline, keeps backups, and exports JSON or CSV. Version 1.0 focuses on individual desktop planning, without cloud sync or team collaboration.
 
-Build workflows cover Windows, Linux, Apple Silicon Macs and Intel Macs. See the [release](https://github.com/asoming/rixu/releases/latest) for actual downloads, test evidence and code-signing status. The interface supports Simplified Chinese and English, with instant switching in Settings and a saved language preference. Your own task content is never translated.
+Build workflows cover Windows, Linux, Apple Silicon Macs and Intel Macs. See the [release](https://github.com/asoming/deskplan/releases/latest) for actual downloads, test evidence and code-signing status. The interface supports Simplified Chinese and English, with instant switching in Settings and a saved language preference. Your own task content is never translated.
 
 ## Top-right docking and a fixed position (1.0.2)
 
-Rixu starts flush with the top-right corner of the screen work area, with no outer window or panel gap; fresh installs use 760 × 540. Position is fixed by default while task editing and file drops remain available. Use the pin in the left sidebar to unlock, drag the empty part of the left sidebar, then fix the position again. The diagonal arrow docks it flush at the top right and resets the right margin to zero. Settings can reserve an additional 0–480 px on the right. Mini mode keeps the same corner; manual placement is restored when expanded. Monitor changes keep the window in the available work area.
+DeskPlan starts flush with the top-right corner of the screen work area, with no outer window or panel gap; fresh installs use 760 × 540. Position is fixed by default while task editing and file drops remain available. Use the pin in the left sidebar to unlock, drag the empty part of the left sidebar, then fix the position again. The diagonal arrow docks it flush at the top right and resets the right margin to zero. Settings can reserve an additional 0–480 px on the right. Mini mode keeps the same corner; manual placement is restored when expanded. Monitor changes keep the window in the available work area.
 
 The main panel, mini panel and quick capture never stay on top. Legacy topmost preferences are disabled. Controls live in a narrow left sidebar with translated hover labels; the panel no longer shows a brand logo. The application launcher retains its icon.
 
@@ -32,17 +32,17 @@ Drop a folder, project directory or `.code-workspace` file into a zone or onto a
 
 ## 1.0.5 Click and drop fix
 
-Fixes the Linux desktop icon surface intercepting planner clicks and file drops. The order is desktop/icons < Rixu < ordinary apps. Fully transparent backgrounds remain interactive; fixing the window position does not enable click-through. Linux runs through X11/XWayland.
+Fixes the Linux desktop icon surface intercepting planner clicks and file drops. The order is desktop/icons < DeskPlan < ordinary apps. Fully transparent backgrounds remain interactive; fixing the window position does not enable click-through. Linux runs through X11/XWayland.
 
 ## 1.0.6 Simpler controls and update notices
 
 Removes mouse-through and its shortcut, plus minimize and close buttons. Unlock position and drag empty panel areas or quadrant headings. Mini mode has only New task and Expand; right-click for position, settings and Quit.
 
-Checks stable GitHub releases after startup and every six hours. An update dialog appears when you return to Rixu and no editor dialog is open, once per version. Settings → Software updates supports manual checks, retry and disabling automatic checks. It opens GitHub for release notes and installers; it does not install automatically or upload tasks/files. GitHub's official latest-release link provides a fallback when the public API is rate limited.
+Checks stable GitHub releases after startup and every six hours. An update dialog appears when you return to DeskPlan and no editor dialog is open, once per version. Settings → Software updates supports manual checks, retry and disabling automatic checks. It opens GitHub for release notes and installers; it does not install automatically or upload tasks/files. GitHub's official latest-release link provides a fallback when the public API is rate limited.
 
 ## 1.0.7 Download and install updates in the app
 
-Settings → Software updates → Check for updates → Download update. Downloads show progress and support cancellation and retry. After SHA256 verification, choose Install and restart or install later; downloaded packages survive app restarts. Tasks and settings receive an additional backup before installation, and Quick Capture drafts are retained. Rixu never downloads, installs or restarts automatically.
+Settings → Software updates → Check for updates → Download update. Downloads show progress and support cancellation and retry. After SHA256 verification, choose Install and restart or install later; downloaded packages survive app restarts. Tasks and settings receive an additional backup before installation, and Quick Capture drafts are retained. DeskPlan never downloads, installs or restarts automatically.
 
 Writable user-local Linux installations are replaced with the previous runtime retained; system deb installations request system authorization. Windows updates the existing installation directory. macOS updates an installed Applications bundle and verifies signature integrity. The installation folder must be writable; otherwise download from GitHub and install manually. Ad-hoc macOS signatures do not establish publisher identity or notarization. Versions 1.0.6 and earlier need a one-time manual installation of this release before they can update in the app.
 
@@ -54,8 +54,14 @@ Fixes cards previously showing only a count such as “0/2” without the actual
 
 ## 1.0.9 Tray-only presence
 
-Rixu no longer takes up a taskbar or macOS Dock slot. The desktop planning panel remains visible and interactive. On Linux, both the panel and quick capture are also excluded from the window switcher; these hints survive focus, mini mode and hide/show. The system tray provides Show Rixu, Quick capture, Settings and backup, Restore visibility, Fix position and Quit.
+DeskPlan no longer takes up a taskbar or macOS Dock slot. The desktop planning panel remains visible and interactive. On Linux, both the panel and quick capture are also excluded from the window switcher; these hints survive focus, mini mode and hide/show. The system tray provides Show DeskPlan, Quick capture, Settings and backup, Restore visibility, Fix position and Quit.
 
 ## 1.0.10 Show the planner at login
 
-Autostart now displays the desktop panel immediately, without needing Show Rixu from the tray. It does not take focus and keeps its tray-only presence below other apps. Legacy --hidden login entries also show the panel; existing enabled login entries are refreshed on launch without toggling the setting. Tasks, checklists and preferences are preserved.
+Autostart now displays the desktop panel immediately, without needing Show DeskPlan from the tray. It does not take focus and keeps its tray-only presence below other apps. Legacy --hidden login entries also show the panel; existing enabled login entries are refreshed on launch without toggling the setting. Tasks, checklists and preferences are preserved.
+
+## 1.0.11 Introducing DeskPlan
+
+The English name is now **DeskPlan**, reflecting its purpose: desktop task planning. The Chinese name remains 日序. English windows, tray menus, Quick Capture, backup names, documentation and downloadable packages use the new name. The repository is now [asoming/deskplan](https://github.com/asoming/deskplan), and new versions check and download updates from this address.
+
+**Upgrading older versions:** versions 1.0.10 and earlier have the old repository URL built into their updater. After the rename, [download and install the new version once](https://github.com/asoming/deskplan/releases/latest) without uninstalling. Subsequent updates work inside the app. Existing installation IDs and data locations are retained, preserving tasks, attachment paths, language, autostart and other preferences.

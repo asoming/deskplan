@@ -22,7 +22,7 @@ function installTarget({ platform = process.platform, execPath = process.execPat
   return { kind: 'unsupported', reason: '暂不支持此系统的应用内更新' };
 }
 async function extractLinux(file, stage, version) {
-  const prefix = `Rixu-${version}-linux-x64`;
+  const prefix = `DeskPlan-${version}-linux-x64`;
   if (process.versions.electron && process.argv[2] !== '--extract-rixu') {
     await run(process.execPath, [__filename, '--extract-rixu', file, stage, version], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, timeout: 180000 });
     return path.join(stage, prefix);

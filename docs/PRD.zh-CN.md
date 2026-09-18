@@ -1,6 +1,6 @@
 # 日序 · 桌面计划 PRD v1.6
 
-应用版本：1.0.10 · 2026-09-15
+应用版本：1.0.11 · 2026-09-18
 
 ## 产品定位
 
@@ -69,13 +69,13 @@
 
 ## 原生发行与质量门槛
 
-Git 管理源代码，公开仓库为 [asoming/rixu](https://github.com/asoming/rixu)，提供中文、英文 README 和产品介绍。Windows x64 使用 NSIS 安装程序；Linux x64 提供 Debian 包与 tar.gz；Apple Silicon / Intel Mac 分别提供 DMG 和 ZIP。使用日历、计划清单与勾选元素作为 App 图标，提供桌面入口与系统托盘。
+Git 管理源代码，公开仓库为 [asoming/deskplan](https://github.com/asoming/deskplan)，提供中文、英文 README 和产品介绍。Windows x64 使用 NSIS 安装程序；Linux x64 提供 Debian 包与 tar.gz；Apple Silicon / Intel Mac 分别提供 DMG 和 ZIP。使用日历、计划清单与勾选元素作为 App 图标，提供桌面入口与系统托盘。
 
 只有同一提交的四个平台作业均通过，才将对应产物发布为正式版。检查包括任务与存储单元测试、真实 Electron 界面、打包后 ASAR 加载、持久化及退出、Windows 实际安装、macOS DMG 挂载和签名完整性、Debian 解包后的桌面入口与启动。发行页提供 SHA-256 校验值和验证记录。
 
 本版未配置商业签名证书：Windows 未做 Authenticode 签名；macOS 为 ad-hoc 签名且未公证。签名信任、每种 Linux 桌面环境和系统通知服务的表现不属于自动化测试能够完全证明的范围。
 
-调研依据和取舍见[用户痛点调研](https://github.com/asoming/rixu/blob/main/docs/RESEARCH.zh-CN.md)。来源为公开用户讨论与 issue，属于定性样本，不将历史反馈等同于竞品当前缺陷。
+调研依据和取舍见[用户痛点调研](https://github.com/asoming/deskplan/blob/main/docs/RESEARCH.zh-CN.md)。来源为公开用户讨论与 issue，属于定性样本，不将历史反馈等同于竞品当前缺陷。
 
 ## 本版验收
 
@@ -145,3 +145,9 @@ Linux 用户目录安装可直接替换并保留旧版本；系统 deb 安装通
 ## 1.0.10 开机直接显示桌面计划
 
 开机自启动后直接显示桌面面板，无需通过托盘手动显示。启动时不抢焦点，继续只保留托盘图标，面板位于其他应用下方。兼容旧版带 --hidden 的启动项；已启用自启动的用户打开新版后会自动刷新启动项，无需重新设置。任务、子清单及个性化设置保留。
+
+## 1.0.11 英文名 DeskPlan
+
+英文名改为 **DeskPlan**，突出桌面任务规划；中文继续使用“日序”。英文窗口、托盘、快捷记录、备份名称、文档及安装包统一采用新名称。GitHub 仓库改为 [asoming/deskplan](https://github.com/asoming/deskplan)，新版检测和下载更新使用新地址。
+
+**旧版升级：** 1.0.10 及以前版本的更新器使用固定的旧仓库地址，改名后请从[新仓库正式版页面](https://github.com/asoming/deskplan/releases/latest)手动下载安装一次新版，无需卸载旧版。之后可继续在应用内更新。原安装标识和数据目录保留，任务、附件路径、语言、自启动及其他设置不变。

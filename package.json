@@ -1,10 +1,10 @@
 {
   "name": "rixu-desktop",
   "productName": "日序",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "desktopName": "io.rixu.desktop",
   "private": true,
-  "description": "日序：今天、本周、四象限与随手记录",
+  "description": "DeskPlan / 日序 — Desktop task planning, Today, Week and urgency quadrants",
   "main": "src/main.cjs",
   "scripts": {
     "start": "electron .",
@@ -34,9 +34,9 @@
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "https://github.com/asoming/rixu.git"
+    "url": "https://github.com/asoming/deskplan.git"
   },
-  "homepage": "https://github.com/asoming/rixu",
+  "homepage": "https://github.com/asoming/deskplan",
   "dependencies": {
     "tar": "7.5.22"
   }

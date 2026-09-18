@@ -3,10 +3,13 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), os = require('node:os');
 const { UpdateChecker, releaseInfo, newer, endpoint } = require('../src/updates.cjs');
+test('update checks target the renamed repository', () => {
+  assert.equal(endpoint, 'https://api.github.com/repos/asoming/deskplan/releases/latest');
+});
 test('stable release comparison is numeric and never downgrades or accepts remote URLs', () => {
   assert.equal(newer('v1.10.0', '1.9.9'), true);
   for (const tag of ['v1.0.6','v1.0.5','v1.0.7-beta','v01.9.0','../../evil']) assert.equal(newer(tag,'1.0.6'),false);
-  assert.deepEqual(releaseInfo({tag_name:'v1.0.7',draft:false,prerelease:false,html_url:'https://evil.example/'},'1.0.6'),{version:'1.0.7',url:'https://github.com/asoming/rixu/releases/tag/v1.0.7'});
+  assert.deepEqual(releaseInfo({tag_name:'v1.0.7',draft:false,prerelease:false,html_url:'https://evil.example/'},'1.0.6'),{version:'1.0.7',url:'https://github.com/asoming/deskplan/releases/tag/v1.0.7'});
   assert.throws(()=>releaseInfo({tag_name:'v1.0.7',draft:true,prerelease:false},'1.0.6'));
   assert.throws(()=>releaseInfo({tag_name:'v1.0.7',draft:false,prerelease:true},'1.0.6'));
 });
@@ -31,9 +34,9 @@ test('checks deduplicate, persist notification acknowledgement, and retry networ
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 });
 test('API rate limits can use only the official stable-release redirect', async () => {
- const checker=new UpdateChecker({version:'1.0.6',fetch:async()=>({ok:false,status:403}),latestURL:async()=> 'https://github.com/asoming/rixu/releases/tag/v1.0.7'});
+ const checker=new UpdateChecker({version:'1.0.6',fetch:async()=>({ok:false,status:403}),latestURL:async()=> 'https://github.com/asoming/deskplan/releases/tag/v1.0.7'});
  assert.equal((await checker.check()).release.version,'1.0.7');
- for(const url of ['https://evil.example/releases/tag/v2.0.0','https://github.com/other/rixu/releases/tag/v2.0.0','https://github.com/asoming/rixu/releases/tag/v2.0.0-beta']) {
+ for(const url of ['https://evil.example/releases/tag/v2.0.0','https://github.com/other/rixu/releases/tag/v2.0.0','https://github.com/asoming/deskplan/releases/tag/v2.0.0-beta']) {
   checker.latestURL=async()=>url;assert.equal((await checker.check()).status,'error');
  }
 });

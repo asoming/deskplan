@@ -36,7 +36,7 @@ module.exports=async function(runtime,js,call,setResponse){
     assert.match(await js('document.querySelector("#update-versions").textContent'),/Current .*New 9.8.7/);
     assert.deepEqual(await js('window.RixuI18n.missing()'),[]);
     let opened;const original=shell.openExternal;shell.openExternal=async url=>{opened=url;};
-    try {await call('updates:open');assert.equal(opened,'https://github.com/asoming/rixu/releases/tag/v9.8.7');} finally {shell.openExternal=original;}
+    try {await call('updates:open');assert.equal(opened,'https://github.com/asoming/deskplan/releases/tag/v9.8.7');} finally {shell.openExternal=original;}
     await js('document.querySelector("#dismiss-update").click()');
     other.focus();win.focus();await sleep(100);assert.equal(await js('document.querySelector("#update-dialog").open'),false,'one automatic prompt per version');
     await js('document.querySelector("#settings-button").click()');

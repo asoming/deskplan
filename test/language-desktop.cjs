@@ -21,7 +21,8 @@ async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await
  await until(()=>js('document.documentElement.lang==="en-US"'),'English switch');
  assert.equal(runtime.store.state.settings.language,'en');
  assert.equal(await js('document.querySelector("#settings-title").textContent'),'Settings and backup');
- assert.equal(await js('document.title'),'Rixu');
+ assert.equal(await js('document.title'),'DeskPlan');
+ assert.equal(win.getTitle(),'DeskPlan');
  assert.match(await js('document.querySelector(".due").textContent'),/Due in/);
  assert.equal(await js('document.querySelector(".task-title").textContent'),title);
  assert.equal(await js('document.querySelector("#task-title").placeholder'),'What needs doing?');
@@ -42,10 +43,13 @@ async function until(fn,label){for(let i=0;i<100;i++){if(await fn())return;await
  await js('document.querySelector("#task-dialog").close()');
  await runtime.showQuickCapture();const quick=runtime.getQuickWindow();
  await until(()=>quick.webContents.executeJavaScript('document.documentElement.lang==="en-US"'),'quick English');
+ assert.equal(quick.getTitle(),'DeskPlan · Quick capture');
  assert.equal(await quick.webContents.executeJavaScript('document.querySelector("#quick-title").placeholder'),'Capture a thought…');
  await quick.webContents.executeJavaScript('document.querySelector("#quick-title").value="今天 draft"');
  await call('settings',{language:'zh-CN'});
  await until(()=>quick.webContents.executeJavaScript('document.documentElement.lang==="zh-CN"'),'quick Chinese');
+ assert.equal(win.getTitle(),'日序');
+ assert.equal(quick.getTitle(),'日序 · 随手记');
  assert.equal(await quick.webContents.executeJavaScript('document.querySelector("#quick-title").value'),'今天 draft');
  assert.equal(await quick.webContents.executeJavaScript('window.fourfold.call("state").then(()=>false).catch(()=>true)'),true);
  await call('settings',{language:'en'});await call('quick:hide');
