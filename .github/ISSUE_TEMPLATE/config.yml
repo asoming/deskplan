@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and everyday usage / 使用交流
+    url: https://github.com/asoming/deskplan/discussions
+    about: Ask questions or share your workflow / 提问或分享使用方法
+  - name: Installation and downloads / 安装与下载
+    url: https://github.com/asoming/deskplan/releases/latest
+    about: Get a tested release for your system / 下载对应系统的正式版

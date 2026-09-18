@@ -1,0 +1,51 @@
+name: Bug report / 问题反馈
+description: Describe something that is not working / 描述无法正常工作的功能
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Please check existing issues first. Do not include personal tasks, file contents, tokens or full backups. / 请先查阅已有问题。不要提交个人任务、文件内容、令牌或完整备份。"
+  - type: input
+    id: version
+    attributes:
+      label: App version / 软件版本
+      placeholder: "1.0.11 — shown at the bottom of Settings / 设置底部可查看"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: System / 系统
+      options:
+        - Windows x64
+        - macOS Apple Silicon
+        - macOS Intel
+        - Linux x64
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS version and desktop environment / 系统版本与桌面环境
+      placeholder: "e.g. Ubuntu 24.04, GNOME, Wayland; Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce / 复现步骤
+      placeholder: "1. Open… / 打开…\n2. Click… / 点击…\n3. What happens? / 出现了什么？"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / 预期行为
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Screenshots or sanitized logs / 截图或脱敏日志
+      description: "Optional. Hide personal task names and local paths. / 可选，请遮挡个人任务名称与本地路径。"
