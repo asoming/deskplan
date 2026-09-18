@@ -1,8 +1,8 @@
 # Contributing / 参与指南
 
-DeskPlan keeps individual task planning quiet, local and easy to reach. Bug reports, documentation improvements, translations and focused fixes are welcome. See the README's License section for the current source terms before reusing or distributing code.
+DeskPlan keeps individual task planning quiet, local and easy to reach. Bug reports, documentation improvements, translations and focused fixes are welcome. The project is licensed under the [MIT License](LICENSE). Contributions submitted for inclusion are provided under the same license.
 
-日序关注安静、本地、随手可用的个人计划。欢迎问题反馈、文档改进、翻译与明确的小范围修复。复用或分发代码前请查看 README 的许可说明。
+日序关注安静、本地、随手可用的个人计划。欢迎问题反馈、文档改进、翻译与明确的小范围修复。本项目采用 [MIT 许可证](LICENSE)，提交并纳入项目的贡献遵循相同许可。
 
 ## Before changing code / 修改前
 

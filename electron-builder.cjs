@@ -6,7 +6,7 @@ module.exports = {
   asar: true,
   asarUnpack: ['src/native/build/Release/*.node'],
   directories: { output: 'dist', buildResources: 'build' },
-  files: ['src/**/*', 'package.json', '!src/assets/*.svg'],
+  files: ['src/**/*', 'package.json', 'LICENSE', '!src/assets/*.svg'],
   icon: 'src/assets/icon.png',
   artifactName: 'DeskPlan-${version}-${os}-${arch}.${ext}',
   publish: null,

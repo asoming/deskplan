@@ -2,7 +2,7 @@
 <h1 align="center">DeskPlan · 日序</h1>
 <p align="center">Your plan, right on your desktop.</p>
 <p align="center"><a href="README.md">简体中文</a> · <a href="https://asoming.github.io/deskplan/">Website & demo</a> · <a href="https://github.com/asoming/deskplan/releases/latest">Latest release</a> · <a href="https://github.com/asoming/deskplan/discussions">Discussions</a></p>
-<p align="center"><a href="https://github.com/asoming/deskplan/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/asoming/deskplan?color=25695b"></a> <a href="https://github.com/asoming/deskplan/actions/workflows/build.yml"><img alt="Desktop build and tests" src="https://github.com/asoming/deskplan/actions/workflows/build.yml/badge.svg"></a> <img alt="Windows, macOS and Linux" src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-337889"></p>
+<p align="center"><a href="https://github.com/asoming/deskplan/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/asoming/deskplan?color=25695b"></a> <a href="https://github.com/asoming/deskplan/actions/workflows/build.yml"><img alt="Desktop build and tests" src="https://github.com/asoming/deskplan/actions/workflows/build.yml/badge.svg"></a> <img alt="Windows, macOS and Linux" src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-337889"> <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-25695b"></a></p>
 
 Drop files into four urgency zones and plan Today or the Week. **Keep the planner above the desktop and below other apps, with separate background and text transparency.** No account. Works offline. No ads or telemetry.
 
@@ -76,4 +76,4 @@ No cloud sync, team collaboration or two-way system calendar sync. Linux window 
 <a id="license"></a>
 ## License
 
-Source is publicly viewable; no open-source license is currently granted. Copyright remains with the author. Third-party components retain their respective licenses.
+Licensed under the [MIT License](LICENSE). Copyright (c) 2026 asoming. Use, modification, distribution and commercial use are permitted, provided the copyright and permission notices are retained in copies or substantial portions of the software. The software is provided “as is”, without warranty. Third-party components retain their respective licenses.
