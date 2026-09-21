@@ -73,6 +73,10 @@ npm run test:language
 
 当前不提供云同步、团队协作或系统日历双向同步。Linux 窗口行为依赖桌面环境，使用 X11 / XWayland。
 
+## 其他作品
+
+[墨页 Markwrite](https://github.com/asoming/markwrite) — 本地 Markdown 阅读与编辑器，支持双栏对照、逐字差异与 Git 版本管理。[官网与操作指南](https://asoming.github.io/markwrite/zh-CN/)。
+
 <a id="license"></a>
 ## 许可
 
