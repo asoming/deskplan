@@ -4,6 +4,12 @@ DeskPlan keeps individual task planning quiet, local and easy to reach. Bug repo
 
 日序关注安静、本地、随手可用的个人计划。欢迎问题反馈、文档改进、翻译与明确的小范围修复。本项目采用 [MIT 许可证](LICENSE)，提交并纳入项目的贡献遵循相同许可。
 
+## Find a starting point / 从哪里开始
+
+Browse [good first issues](https://github.com/asoming/deskplan/contribute) for bounded tasks with acceptance criteria, or [help wanted](https://github.com/asoming/deskplan/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22) for broader contributions. Comment on an issue before starting to avoid duplicate work. Testing or documentation for one platform is welcome; you do not need all three systems.
+
+可以从上面的小任务开始，先留言认领，避免重复工作。只验证自己使用的平台、补充文档或复现步骤也有帮助；没有验证的系统请明确标注。
+
 ## Before changing code / 修改前
 
 - Search Issues first. For larger features, discuss the use case in an issue before implementing it.

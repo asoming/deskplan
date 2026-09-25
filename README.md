@@ -47,11 +47,20 @@
 2. 安排计划日期、截止时间或子清单；在今天、本周、四象限之间切换。
 3. 左侧设置中调整透明度、语言与提醒。右键面板或托盘可固定位置、打开设置或退出。
 
+## 三个实际用法
+
+| 你想做什么 | 可以这样安排 |
+| --- | --- |
+| 跟进一个项目交付 | 把项目文件夹或 `.code-workspace` 拖进四象限，设置截止时间，再用子清单拆成准备、执行、检查。原文件留在原处 |
+| 今天集中做三件事 | 在「今天」挑选最重要的 3 件事并估算耗时；工作时切到小窗，查看当前任务和接下来的两件事 |
+| 避免把一周塞满 | 灵感先记到收集箱，再在「本周」拖到合适的日期，结合预计耗时调整安排；改计划日期不会改截止日期 |
+
 **本地数据与更新：** 任务保存在本机，附件备份只包含路径。旧版本沿用原数据目录；1.0.10 及以前因仓库改名需手动覆盖安装一次新版，无需卸载。之后可在设置里检测、下载更新，自行选择安装重启。
 
 ## 反馈与参与
 
 - [报告问题](https://github.com/asoming/deskplan/issues/new?template=bug_report.yml) · [建议功能](https://github.com/asoming/deskplan/issues/new?template=feature_request.yml) · [交流使用方法](https://github.com/asoming/deskplan/discussions)
+- [适合首次参与的小任务](https://github.com/asoming/deskplan/contribute) · [需要帮助的任务](https://github.com/asoming/deskplan/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22)
 - [参与指南](CONTRIBUTING.md) · [后续方向](ROADMAP.md) · [安全反馈](SECURITY.md)
 - [产品介绍](docs/INTRO.zh-CN.md) · [历史功能更新](docs/HISTORY.zh-CN.md) · [全部发行说明](https://github.com/asoming/deskplan/releases)
 

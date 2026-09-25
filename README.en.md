@@ -47,11 +47,20 @@ The four zones are priority tiers, not a two-axis importance/urgency matrix. For
 2. Add a planned date, deadline or checklist. Switch between Today, Week and the four zones.
 3. Use Settings for transparency, language and reminders. Right-click the panel or tray to fix its position, open settings or quit.
 
+## Three everyday workflows
+
+| Your goal | A practical workflow |
+| --- | --- |
+| Track a project delivery | Drop a project folder or `.code-workspace` into an urgency zone, set a deadline and split the work into preparation, execution and review with a checklist. Original files stay where they are |
+| Focus on three things today | Pick your top three in Today and estimate their duration. Switch to mini mode while working to see the current task and the next two |
+| Keep your week manageable | Capture ideas in Inbox, then drag them onto suitable days in Week. Adjust the plan using time estimates; changing the planned date does not change the deadline |
+
 **Data and updates:** tasks stay on your computer; attachment backups contain paths only. Existing data locations are retained. Versions 1.0.10 and earlier need one manual installation after the repository rename; install over the existing app without uninstalling. New versions can check and download updates in Settings; you choose when to install and restart.
 
 ## Feedback and contributions
 
 - [Report a bug](https://github.com/asoming/deskplan/issues/new?template=bug_report.yml) · [Suggest a feature](https://github.com/asoming/deskplan/issues/new?template=feature_request.yml) · [Ask a question](https://github.com/asoming/deskplan/discussions)
+- [Good first issues](https://github.com/asoming/deskplan/contribute) · [Help wanted](https://github.com/asoming/deskplan/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22)
 - [Contribution guide](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Security reporting](SECURITY.md)
 - [Product introduction](docs/INTRO.en.md) · [Feature history](docs/HISTORY.en.md) · [All release notes](https://github.com/asoming/deskplan/releases)
 
